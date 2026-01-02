@@ -15,7 +15,6 @@ try {
     createCanvas = canvasModule.createCanvas
   }
 } catch (e) {
-  console.warn('[processor] Canvas module not available:', e)
 }
 
 
@@ -35,7 +34,6 @@ export async function processDocument(options: ProcessingOptions): Promise<strin
   // Override preset size if custom size is provided
   if (maxSizeKB) {
     preset.maxSizeKB = maxSizeKB
-    console.log(`[ProcessDocument] Using custom maxSizeKB: ${maxSizeKB}`)
   }
 
   const reportProgress = (step: string, progress: number, message: string) => {
@@ -43,35 +41,27 @@ export async function processDocument(options: ProcessingOptions): Promise<strin
       onProgress(step, progress, message)
     }
     // Also log to console for debugging
-    console.log(`[Progress] ${step}: ${progress}% - ${message}`)
   }
 
   try {
-    console.log(`[ProcessDocument] Starting - File: ${filePath}, Output: ${outputPath}, Purpose: ${purpose}`)
     reportProgress('upload', 10, 'File uploaded successfully')
 
     const ext = path.extname(filePath).toLowerCase()
     const stats = await fs.stat(filePath)
     const fileSizeKB = stats.size / 1024
 
-    console.log(`[ProcessDocument] Original file size: ${fileSizeKB.toFixed(2)} KB, Extension: ${ext}`)
 
     reportProgress('validation', 20, 'Validating document...')
 
     // Ensure output directory exists
     await fs.ensureDir(path.dirname(outputPath))
-    console.log(`[ProcessDocument] Output directory ensured: ${path.dirname(outputPath)}`)
 
     if (ext === '.pdf') {
-      console.log(`[ProcessDocument] Processing as PDF`)
       return await processPDF(filePath, outputPath, preset, reportProgress)
     } else {
-      console.log(`[ProcessDocument] Processing as Image`)
       return await processImage(filePath, outputPath, preset, purpose, reportProgress)
     }
   } catch (error: any) {
-    console.error(`[ProcessDocument] ERROR: ${error.message}`)
-    console.error(error.stack)
     throw new Error(`Processing failed: ${error.message}`)
   }
 }
@@ -82,7 +72,6 @@ async function processPDF(
   preset: DocumentPreset,
   reportProgress: (step: string, progress: number, message: string) => void
 ): Promise<string> {
-  console.log(`[processPDF] START - Input: ${filePath}, Output: ${outputPath}`)
   reportProgress('processing', 40, 'Processing PDF...')
 
   try {
@@ -98,16 +87,13 @@ async function processPDF(
     reportProgress('optimization', 60, 'Optimizing PDF...')
 
     const inputSizeKB = pdfBytes.length / 1024
-    console.log(`[processPDF] Original PDF size: ${inputSizeKB.toFixed(2)} KB, Target: ${preset.maxSizeKB} KB, Pages: ${pages.length}`)
 
     // If PDF is too large, convert to image-based PDF
     if (inputSizeKB > preset.maxSizeKB) {
-      console.log(`[processPDF] PDF is too large, converting to compressed image format...`)
       reportProgress('optimization', 70, 'Converting PDF to compressed image format...')
 
       try {
         // Strategy 1: Use pdfjs-dist to extract and compress images (works without canvas)
-        console.log(`[processPDF] Extracting images using pdfjs-dist...`)
         reportProgress('optimization', 72, 'Extracting images from PDF...')
 
         let extractedImage: Buffer | null = null
@@ -123,7 +109,6 @@ async function processPDF(
 
           // Get operator list to find image operations
           const operatorList = await pdfPage.getOperatorList()
-          console.log(`[processPDF] Operator list length: ${operatorList.fnArray.length}`)
 
           // Access resources through the page's commonObjs and objs
           // Resources are accessed via the operator list or page dictionary
@@ -142,12 +127,10 @@ async function processPDF(
               }
             }
           } catch (dictError: any) {
-            console.log(`[processPDF] Could not get resources from dict: ${dictError.message}`)
           }
 
           // Alternative: Search operator list for image names (works for image-based PDFs)
           if (!xObjects) {
-            console.log(`[processPDF] Searching operator list for image names...`)
             const foundImages: any = {}
 
             // Look for image names in operator list (operations with image name strings)
@@ -175,7 +158,6 @@ async function processPDF(
                   }
 
                   if (imgObj && imgObj.data && imgObj.data.length > 0) {
-                    console.log(`[processPDF] ✅ Found image "${imgName}": ${imgObj.width}x${imgObj.height}, ${(imgObj.data.length / 1024).toFixed(2)} KB`)
                     foundImages[imgName] = imgObj
                   }
                 } catch (e: any) {
@@ -191,7 +173,6 @@ async function processPDF(
 
           if (xObjects) {
             const keys = Object.keys(xObjects)
-            console.log(`[processPDF] Found ${keys.length} image(s)`)
 
             // Process the largest image (usually the main document image)
             let largestImage: any = null
@@ -206,18 +187,14 @@ async function processPDF(
                 if (imgObj && imgObj.data) {
                   // Already an image object (from operator list search)
                   actualImg = imgObj
-                  console.log(`[processPDF] Image object found directly for key: ${key}`)
                 } else {
                   // Try to get from objs or commonObjs
                   try {
                     actualImg = await pdfPage.objs.get(imgObj)
-                    console.log(`[processPDF] Retrieved image from objs for key: ${key}`)
                   } catch (e1) {
                     try {
                       actualImg = await pdfPage.commonObjs.get(imgObj)
-                      console.log(`[processPDF] Retrieved image from commonObjs for key: ${key}`)
                     } catch (e2) {
-                      console.log(`[processPDF] Could not retrieve image for key: ${key}`)
                     }
                   }
                 }
@@ -225,17 +202,14 @@ async function processPDF(
                 if (actualImg && actualImg.data && actualImg.data.length > largestSize) {
                   largestImage = actualImg
                   largestSize = actualImg.data.length
-                  console.log(`[processPDF] New largest image: ${key}, size: ${(actualImg.data.length / 1024).toFixed(2)} KB`)
                 }
               } catch (keyError: any) {
-                console.log(`[processPDF] Error processing key ${key}: ${keyError.message}`)
               }
             }
 
             if (largestImage) {
               try {
                 const img = largestImage
-                console.log(`[processPDF] Processing largest image: ${img.width}x${img.height}, ${(img.data.length / 1024).toFixed(2)} KB`)
 
                 // Convert image data to Buffer
                 let imgBuffer: Buffer
@@ -250,7 +224,6 @@ async function processPDF(
                   imgBuffer = Buffer.from(img.data as any)
                 }
 
-                console.log(`[processPDF] Image buffer size: ${(imgBuffer.length / 1024).toFixed(2)} KB`)
 
                 // Compress aggressively
                 let quality = 50
@@ -286,7 +259,6 @@ async function processPDF(
                     }
 
                     const sizeKB = compressed.length / 1024
-                    console.log(`[processPDF] Compression attempt ${i + 1}: ${sizeKB.toFixed(2)} KB (q=${quality}, s=${scale.toFixed(2)})`)
 
                     if (sizeKB < bestSize) {
                       bestBuffer = compressed
@@ -294,7 +266,6 @@ async function processPDF(
                     }
 
                     if (sizeKB <= preset.maxSizeKB) {
-                      console.log(`[processPDF] ✅ Target met!`)
                       break
                     }
 
@@ -309,7 +280,6 @@ async function processPDF(
                     if (quality < 18) quality = 18
                     if (scale < 0.4) break
                   } catch (err: any) {
-                    console.log(`[processPDF] Compression error: ${err.message}`)
                     // Try as regular image
                     try {
                       const compressed = await sharp(imgBuffer)
@@ -337,32 +307,20 @@ async function processPDF(
                   extractedImage = bestBuffer
                   extractedWidth = img.width
                   extractedHeight = img.height
-                  console.log(`[processPDF] ✅ Image compressed to ${bestSize.toFixed(2)} KB`)
-                  console.log(`[processPDF] ✅ extractedImage is now set: ${extractedImage ? 'YES' : 'NO'}, size: ${(extractedImage.length / 1024).toFixed(2)} KB`)
                 } else {
-                  console.log(`[processPDF] ❌ Could not compress image - bestBuffer is null`)
                 }
               } catch (imgError: any) {
-                console.log(`[processPDF] Error processing image: ${imgError.message}`)
-                console.log(`[processPDF] Error stack: ${imgError.stack}`)
               }
             } else {
-              console.log(`[processPDF] ❌ largestImage is null - no image to process`)
             }
           } else {
-            console.log(`[processPDF] ❌ xObjects is null or empty - no images found`)
           }
         } catch (pdfjsError: any) {
-          console.log(`[processPDF] pdfjs-dist extraction error: ${pdfjsError.message}`)
-          console.log(`[processPDF] Error stack: ${pdfjsError.stack}`)
         }
 
-        console.log(`[processPDF] After extraction, extractedImage is: ${extractedImage ? `SET (${(extractedImage.length / 1024).toFixed(2)} KB)` : 'NULL'}`)
 
         // If we extracted an image, embed it back into PDF
         if (extractedImage) {
-          console.log(`[processPDF] ✅ Proceeding to embed compressed image into PDF`)
-          console.log(`[processPDF] Embedding compressed image into PDF...`)
           reportProgress('optimization', 85, 'Creating compressed PDF...')
 
           const page = pages[0]
@@ -384,17 +342,9 @@ async function processPDF(
 
           await fs.writeFile(outputPath, compressedBytes)
 
-          console.log(`\n========== PDF COMPRESSION SUMMARY ==========`)
-          console.log(`[processPDF] Original: ${inputSizeKB.toFixed(2)} KB`)
-          console.log(`[processPDF] Compressed: ${compressedSizeKB.toFixed(2)} KB`)
-          console.log(`[processPDF] Reduction: ${((1 - compressedSizeKB / inputSizeKB) * 100).toFixed(1)}%`)
-          console.log(`[processPDF] Method: pdfjs-dist image extraction`)
           if (compressedSizeKB <= preset.maxSizeKB) {
-            console.log(`[processPDF] ✅ Target met!`)
           } else {
-            console.log(`[processPDF] ⚠️  Still above target (${preset.maxSizeKB} KB)`)
           }
-          console.log(`=============================================\n`)
 
           if (compressedSizeKB <= preset.maxSizeKB) {
             reportProgress('complete', 100, `✅ Compressed to ${compressedSizeKB.toFixed(2)} KB`)
@@ -403,16 +353,13 @@ async function processPDF(
           }
           return outputPath
         } else {
-          console.log(`[processPDF] ❌ No images extracted from PDF`)
         }
 
         // Strategy 2: Try canvas-based rendering (requires canvas, may not work on all hosts)
         if (createCanvas) {
-          console.log(`[processPDF] Canvas available, trying PDF rendering...`)
 
           const page = pages[0]
           const { width, height } = page.getSize()
-          console.log(`[processPDF] Page dimensions: ${width}x${height}`)
 
           let imageBuffer: Buffer | null = null
           let quality = 55
@@ -421,7 +368,6 @@ async function processPDF(
           // Try rendering PDF to image with progressive compression
           for (let attempt = 0; attempt < 25; attempt++) {
             try {
-              console.log(`[processPDF] Rendering attempt ${attempt + 1}: quality=${quality}, scale=${scaleFactor.toFixed(2)}`)
 
               const renderWidth = Math.max(400, Math.round(width * scaleFactor))
               const renderHeight = Math.max(400, Math.round(height * scaleFactor))
@@ -432,14 +378,12 @@ async function processPDF(
 
               // Load PDF with pdfjs (convert Buffer to Uint8Array)
               const pdfUint8Array = new Uint8Array(pdfBytes)
-              console.log(`[processPDF] Loading PDF for rendering...`)
               const loadingTask = pdfjsLib.getDocument({
                 data: pdfUint8Array,
                 standardFontDataUrl: path.join(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/')
               })
               const pdfDocument = await loadingTask.promise
               const pdfPage = await pdfDocument.getPage(1)
-              console.log(`[processPDF] PDF page 1 loaded`)
 
               const viewport = pdfPage.getViewport({ scale: scaleFactor })
 
@@ -449,18 +393,14 @@ async function processPDF(
               }
 
               await pdfPage.render(renderContext).promise
-              console.log(`[processPDF] Render success for attempt ${attempt + 1}`)
-              console.log(`[processPDF] Render finished`)
 
               // Convert canvas to JPEG buffer with compression
               const canvasBuffer = canvas.toBuffer('image/jpeg', { quality: quality / 100 })
               const imageSizeKB = canvasBuffer.length / 1024
 
-              console.log(`[processPDF] Rendered image: ${imageSizeKB.toFixed(2)} KB`)
 
               if (imageSizeKB <= preset.maxSizeKB) {
                 imageBuffer = canvasBuffer
-                console.log(`[processPDF] Success! Image meets size requirement`)
                 break
               }
 
@@ -476,14 +416,12 @@ async function processPDF(
               if (quality < 18) quality = 18
               if (scaleFactor < 0.4) break
             } catch (renderError: any) {
-              console.error(`[processPDF] Rendering error: ${renderError.message}`)
               break
             }
           }
 
           if (imageBuffer) {
             // Embed compressed image back into PDF (maintain PDF format)
-            console.log(`[processPDF] Embedding compressed image into PDF...`)
 
             const newPdfDoc = await PDFDocument.create()
             const newPage = newPdfDoc.addPage([width, height])
@@ -503,12 +441,6 @@ async function processPDF(
             const savedStats = await fs.stat(outputPath)
             const savedSizeKB = savedStats.size / 1024
 
-            console.log(`\n========== PDF COMPRESSION SUMMARY ==========`)
-            console.log(`[processPDF] Original PDF: ${inputSizeKB.toFixed(2)} KB`)
-            console.log(`[processPDF] Compressed PDF: ${savedSizeKB.toFixed(2)} KB`)
-            console.log(`[processPDF] Compression: ${((1 - savedSizeKB / inputSizeKB) * 100).toFixed(1)}%`)
-            console.log(`[processPDF] Method: Canvas rendering`)
-            console.log(`=============================================\n`)
 
             if (savedSizeKB <= preset.maxSizeKB) {
               reportProgress('complete', 100, `Processing complete! Compressed PDF: ${savedSizeKB.toFixed(2)} KB`)
@@ -519,11 +451,9 @@ async function processPDF(
             return outputPath
           }
         } else {
-          console.log(`[processPDF] Canvas not available (optional dependency)`)
         }
 
         // Last resort: Try pdfjs-dist to render PDF (works without canvas but needs Node.js canvas polyfill)
-        console.log(`[processPDF] Attempting PDF rendering with pdfjs-dist (no canvas required)...`)
 
         try {
           const page = pages[0]
@@ -548,15 +478,11 @@ async function processPDF(
 
           // Note: pdfjs-dist in Node.js requires a canvas implementation
           // Without canvas, we can't render PDFs to images
-          console.log(`[processPDF] pdfjs-dist rendering requires canvas for Node.js`)
-          console.log(`[processPDF] Canvas is not available - PDF compression limited`)
 
         } catch (pdfjsError: any) {
-          console.log(`[processPDF] pdfjs-dist rendering failed: ${pdfjsError.message}`)
         }
 
         // Final fallback: Optimize PDF structure (minimal compression)
-        console.log(`[processPDF] All compression methods exhausted, optimizing PDF structure...`)
         const optimizedPdfDoc = await PDFDocument.create()
         const [copiedPage] = await optimizedPdfDoc.copyPages(pdfDoc, [0])
         optimizedPdfDoc.addPage(copiedPage)
@@ -566,33 +492,8 @@ async function processPDF(
 
         await fs.writeFile(outputPath, optimizedBytes)
 
-        console.log(`\n========== PDF COMPRESSION SUMMARY ==========`)
-        console.log(`[processPDF] Original: ${inputSizeKB.toFixed(2)} KB`)
-        console.log(`[processPDF] Optimized: ${optimizedSizeKB.toFixed(2)} KB`)
-        console.log(`[processPDF] Target: ${preset.maxSizeKB} KB`)
-        console.log(`[processPDF] Reduction: ${((1 - optimizedSizeKB / inputSizeKB) * 100).toFixed(1)}%`)
-        console.log(``)
         if (optimizedSizeKB > preset.maxSizeKB) {
-          console.log(`[processPDF] ⚠️  COMPRESSION FAILED - PDF cannot be compressed without canvas`)
-          console.log(`[processPDF]`)
-          console.log(`[processPDF] Reason: PDF has no extractable embedded images`)
-          console.log(`[processPDF] Canvas: Not available (required for PDF rendering)`)
-          console.log(`[processPDF]`)
-          console.log(`[processPDF] 💡 SOLUTIONS:`)
-          console.log(`[processPDF]`)
-          console.log(`[processPDF] Option 1 (Recommended for hosting):`)
-          console.log(`[processPDF]   → Convert PDF to JPEG/PNG first, then upload`)
-          console.log(`[processPDF]   → Image compression works perfectly without canvas`)
-          console.log(`[processPDF]`)
-          console.log(`[processPDF] Option 2 (Local development only):`)
-          console.log(`[processPDF]   → Install canvas: npm install canvas`)
-          console.log(`[processPDF]   → Install system deps: brew install pkg-config cairo pango libpng jpeg giflib librsvg pixman`)
-          console.log(`[processPDF]`)
-          console.log(`[processPDF] Option 3:`)
-          console.log(`[processPDF]   → Use a scanned PDF (contains embedded images)`)
-          console.log(`[processPDF]   → Scanned PDFs can be compressed without canvas`)
         }
-        console.log(`=============================================\n`)
 
         if (optimizedSizeKB <= preset.maxSizeKB) {
           reportProgress('complete', 100, `Processing complete! Final size: ${optimizedSizeKB.toFixed(2)} KB`)
@@ -604,7 +505,6 @@ async function processPDF(
         return outputPath
       } catch (conversionError: any) {
         // If all compression fails, save optimized PDF
-        console.error(`[processPDF] Compression failed: ${conversionError.message}`)
 
         const optimizedPdfDoc = await PDFDocument.create()
         const [copiedPage] = await optimizedPdfDoc.copyPages(pdfDoc, [0])
@@ -617,7 +517,6 @@ async function processPDF(
       }
     } else {
       // PDF is already within size limits
-      console.log(`[processPDF] PDF is already within size limits, saving as-is`)
       await fs.writeFile(outputPath, pdfBytes)
       reportProgress('complete', 100, 'Processing complete!')
       return outputPath
@@ -634,20 +533,17 @@ async function processImage(
   purpose: DocumentPurpose,
   reportProgress: (step: string, progress: number, message: string) => void
 ): Promise<string> {
-  console.log(`[processImage] START - Input: ${filePath}, Output: ${outputPath}`)
   reportProgress('processing', 40, 'Processing image...')
 
   try {
     const stats = await fs.stat(filePath)
     const originalSizeKB = stats.size / 1024
-    console.log(`[processImage] Original size: ${originalSizeKB.toFixed(2)} KB, Target: ${preset.maxSizeKB} KB`)
 
     // Detect output format from outputPath extension
     const outputExt = path.extname(outputPath).toLowerCase()
     const isJPEG = outputExt === '.jpg' || outputExt === '.jpeg'
     const isPNG = outputExt === '.png'
 
-    console.log(`[processImage] Output format: ${outputExt} (JPEG: ${isJPEG}, PNG: ${isPNG})`)
 
     let image = sharp(filePath)
     const metadata = await image.metadata()
@@ -773,7 +669,6 @@ async function processImage(
         if (quality < 18) quality = 18
         if (scaleFactor < 0.3) scaleFactor = 0.3
       } catch (err) {
-        console.error('Compression attempt failed:', err)
         break
       }
     }
@@ -783,7 +678,6 @@ async function processImage(
       throw new Error('Failed to create compressed buffer')
     }
 
-    console.log(`[Compression Debug] After loop: ${finalSizeKB.toFixed(2)} KB, target: ${preset.maxSizeKB} KB`)
 
     // If still too large, apply more aggressive compression
     if (finalSizeKB > preset.maxSizeKB) {
@@ -864,7 +758,6 @@ async function processImage(
         // Update output path to .jpg if we converted PNG to JPEG
         if (outputPath.endsWith('.png')) {
           outputPath = outputPath.replace('.png', '.jpg')
-          console.log(`[processImage] PNG too large, converted to JPEG: ${outputPath}`)
         }
       } else {
         compressedBuffer = await maxPipeline
@@ -878,7 +771,6 @@ async function processImage(
       reportProgress('optimization', 87, `Maximum compression: ${finalSizeKB.toFixed(2)} KB`)
     }
 
-    console.log(`[Compression Debug] Final before save: ${finalSizeKB.toFixed(2)} KB`)
 
     // Use the compressed buffer directly - don't re-encode (it increases size)
     let bufferToSave = compressedBuffer
@@ -910,11 +802,9 @@ async function processImage(
         // Update output path if we converted
         if (outputPath.endsWith('.png')) {
           outputPath = outputPath.replace('.png', '.jpg')
-          console.log(`[processImage] PNG too large, converted to JPEG: ${outputPath}`)
         }
       }
 
-      console.log(`[Compression Debug] Last resort: ${(bufferToSave.length / 1024).toFixed(2)} KB`)
     }
 
     // Verify the final size
@@ -923,14 +813,6 @@ async function processImage(
     // Save the file
     const bufferSizeKB = bufferToSave.length / 1024
     const finalFormat = path.extname(outputPath).toLowerCase()
-    console.log(`\n========== COMPRESSION SUMMARY ==========`)
-    console.log(`[Compression] Saving to: ${outputPath}`)
-    console.log(`[Compression] Format: ${finalFormat} (${isJPEG ? 'JPEG' : isPNG ? 'PNG' : 'Other'})`)
-    console.log(`[Compression] Buffer size BEFORE save: ${bufferSizeKB.toFixed(2)} KB`)
-    console.log(`[Compression] Original size: ${originalSizeKB.toFixed(2)} KB`)
-    console.log(`[Compression] Target size: ${preset.maxSizeKB} KB`)
-    console.log(`[Compression] Compression ratio: ${((1 - bufferSizeKB / originalSizeKB) * 100).toFixed(1)}%`)
-    console.log(`=========================================\n`)
 
     await fs.writeFile(outputPath, bufferToSave)
 
@@ -939,14 +821,6 @@ async function processImage(
     const actualSavedSizeKB = savedStats.size / 1024
 
     // Log for debugging
-    console.log(`\n========== FILE SAVE VERIFICATION ==========`)
-    console.log(`[Compression] File saved at: ${outputPath}`)
-    console.log(`[Compression] File exists: ${await fs.pathExists(outputPath)}`)
-    console.log(`[Compression] Original: ${originalSizeKB.toFixed(2)} KB`)
-    console.log(`[Compression] Buffer: ${bufferSizeKB.toFixed(2)} KB`)
-    console.log(`[Compression] Saved file: ${actualSavedSizeKB.toFixed(2)} KB`)
-    console.log(`[Compression] Target: ${preset.maxSizeKB} KB`)
-    console.log(`===========================================\n`)
 
     if (actualSavedSizeKB > preset.maxSizeKB * 1.1) {
       reportProgress('complete', 100, `Warning: File size ${actualSavedSizeKB.toFixed(2)} KB exceeds target of ${preset.maxSizeKB} KB`)
@@ -973,7 +847,6 @@ async function extractAndCompressPDFImages(
     // Method 1: Try using pdfjs-dist to extract images (more reliable for image-based PDFs)
     if (pdfBytes) {
       try {
-        console.log(`[extractAndCompressPDFImages] Trying pdfjs-dist extraction method...`)
         // Convert Buffer to Uint8Array (pdfjs-dist requirement)
         const pdfUint8Array = new Uint8Array(pdfBytes)
         const loadingTask = pdfjsLib.getDocument({ data: pdfUint8Array })
@@ -982,13 +855,11 @@ async function extractAndCompressPDFImages(
 
         // Get resources from the page
         const resources = await (pdfPage as any).getResources()
-        console.log(`[extractAndCompressPDFImages] pdfjs resources keys:`, resources ? Object.keys(resources) : 'none')
 
         // Try to access XObject images
         if (resources && (resources as any).XObject) {
           const xObjects = (resources as any).XObject
           const xObjectKeys = Object.keys(xObjects)
-          console.log(`[extractAndCompressPDFImages] Found ${xObjectKeys.length} XObject(s) via pdfjs`)
 
           for (const key of xObjectKeys) {
             try {
@@ -996,7 +867,6 @@ async function extractAndCompressPDFImages(
               const xObject = await pdfPage.objs.get(xObjectRef)
 
               if (xObject && (xObject as any).subtype === 'Image') {
-                console.log(`[extractAndCompressPDFImages] Found image XObject: ${key}`)
                 const imgObj = xObject as any
 
                 // Get image data
@@ -1006,7 +876,6 @@ async function extractAndCompressPDFImages(
                   const width = imgObj.width || 1000
                   const height = imgObj.height || 1000
 
-                  console.log(`[extractAndCompressPDFImages] Extracted image: ${width}x${height}, ${(imageBuffer.length / 1024).toFixed(2)} KB`)
 
                   // Compress the image
                   let quality = 50
@@ -1062,7 +931,6 @@ async function extractAndCompressPDFImages(
                         if (quality < 20) quality = 20
                         if (scaleFactor < 0.5) break
                       } catch (fallbackError: any) {
-                        console.log(`[extractAndCompressPDFImages] Compression failed: ${fallbackError.message}`)
                         break
                       }
                     }
@@ -1074,35 +942,28 @@ async function extractAndCompressPDFImages(
                       width: width,
                       height: height
                     })
-                    console.log(`[extractAndCompressPDFImages] Compressed via pdfjs: ${bestSizeKB.toFixed(2)} KB`)
                   }
                 }
               }
             } catch (xObjError: any) {
-              console.log(`[extractAndCompressPDFImages] Error processing XObject ${key}: ${xObjError.message}`)
             }
           }
         }
 
         if (compressedImages.length > 0) {
-          console.log(`[extractAndCompressPDFImages] Successfully extracted ${compressedImages.length} image(s) using pdfjs-dist`)
           return compressedImages
         } else {
-          console.log(`[extractAndCompressPDFImages] pdfjs-dist found no images`)
         }
       } catch (pdfjsError: any) {
-        console.log(`[extractAndCompressPDFImages] pdfjs-dist extraction failed: ${pdfjsError.message}`)
       }
     }
 
     // Method 2: Fallback to pdf-lib's internal APIs
-    console.log(`[extractAndCompressPDFImages] Trying pdf-lib internal extraction...`)
 
     // Access pdf-lib's internal PDF context
     const context = (pdfDoc as any).context
 
     if (!context) {
-      console.log(`[extractAndCompressPDFImages] No PDF context available`)
       return compressedImages
     }
 
@@ -1110,7 +971,6 @@ async function extractAndCompressPDFImages(
     const pages = pdfDoc.getPages()
     if (pages.length === 0) return compressedImages
 
-    console.log(`[extractAndCompressPDFImages] Processing ${pages.length} page(s)`)
 
     // Try multiple methods to find images
     for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
@@ -1118,11 +978,9 @@ async function extractAndCompressPDFImages(
       const pageNode = (page as any).node
 
       if (!pageNode) {
-        console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: No page node found`)
         continue
       }
 
-      console.log(`[extractAndCompressPDFImages] Checking page ${pageIndex + 1}...`)
 
       // Method 1: Try to access page resources directly
       let resources = pageNode.get('Resources')
@@ -1150,11 +1008,9 @@ async function extractAndCompressPDFImages(
       }
 
       if (!resources) {
-        console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: No resources found`)
         continue
       }
 
-      console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: Resources found`)
 
       // Look for XObject resources (where images are stored)
       let xObject = resources.get('XObject')
@@ -1168,11 +1024,9 @@ async function extractAndCompressPDFImages(
       }
 
       if (!xObject) {
-        console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: No XObject found`)
         continue
       }
 
-      console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: XObject found`)
 
       // Extract image objects from XObject dictionary
       let xObjectDict = xObject.dict || xObject
@@ -1184,11 +1038,9 @@ async function extractAndCompressPDFImages(
         imageKeys = Object.keys(xObjectDict)
       }
 
-      console.log(`[extractAndCompressPDFImages] Page ${pageIndex + 1}: Found ${imageKeys.length} XObject key(s)`)
 
       for (const key of imageKeys) {
         try {
-          console.log(`[extractAndCompressPDFImages] Processing XObject key: ${key}`)
 
           let imageRef
           if (typeof xObjectDict.get === 'function') {
@@ -1198,14 +1050,12 @@ async function extractAndCompressPDFImages(
           }
 
           if (!imageRef) {
-            console.log(`[extractAndCompressPDFImages] No reference for key ${key}`)
             continue
           }
 
           const imageObj = context.lookup(imageRef)
 
           if (!imageObj) {
-            console.log(`[extractAndCompressPDFImages] Could not lookup image object for key ${key}`)
             continue
           }
 
@@ -1219,14 +1069,11 @@ async function extractAndCompressPDFImages(
           }
 
           const subtypeName = subtype?.name || subtype
-          console.log(`[extractAndCompressPDFImages] Subtype: ${subtypeName}`)
 
           if (subtypeName !== 'Image' && subtypeName !== '/Image') {
-            console.log(`[extractAndCompressPDFImages] Skipping non-image XObject (${subtypeName})`)
             continue
           }
 
-          console.log(`[extractAndCompressPDFImages] Found image object!`)
 
           // Get image data - try multiple access methods
           let width = imageObj.get('Width')
@@ -1242,7 +1089,6 @@ async function extractAndCompressPDFImages(
             bitsPerComponent = bitsPerComponent || dict?.get('BitsPerComponent') || dict?.BitsPerComponent || 8
           }
 
-          console.log(`[extractAndCompressPDFImages] Image dimensions: ${width}x${height}, ColorSpace: ${colorSpace?.name || colorSpace}, Bits: ${bitsPerComponent}`)
 
           // Get image stream data - try multiple access methods
           let stream = imageObj.get('stream')
@@ -1252,7 +1098,6 @@ async function extractAndCompressPDFImages(
           }
 
           if (!stream) {
-            console.log(`[extractAndCompressPDFImages] No stream found for image`)
             continue
           }
 
@@ -1262,11 +1107,9 @@ async function extractAndCompressPDFImages(
           }
 
           if (!imageData) {
-            console.log(`[extractAndCompressPDFImages] No image data in stream`)
             continue
           }
 
-          console.log(`[extractAndCompressPDFImages] Image data found: ${typeof imageData}, length: ${imageData?.length || 'unknown'}`)
 
           // Convert to buffer
           let imageBuffer: Buffer
@@ -1276,11 +1119,9 @@ async function extractAndCompressPDFImages(
           } else if (imageData instanceof Uint8Array) {
             imageBuffer = Buffer.from(imageData)
           } else {
-            console.log(`[extractAndCompressPDFImages] Image data is not in a supported format: ${typeof imageData}`)
             continue
           }
 
-          console.log(`[extractAndCompressPDFImages] Extracted image: ${width}x${height}, ${(imageBuffer.length / 1024).toFixed(2)} KB`)
 
           // Compress the image aggressively
           // PDF images might be in raw format, so we need to create a proper image buffer
@@ -1313,7 +1154,6 @@ async function extractAndCompressPDFImages(
 
               const sizeKB = compressed.length / 1024
 
-              console.log(`[extractAndCompressPDFImages] Attempt ${attempt + 1}: ${sizeKB.toFixed(2)} KB (quality=${quality}, scale=${scaleFactor.toFixed(2)})`)
 
               if (sizeKB < bestSizeKB) {
                 bestBuffer = compressed
@@ -1321,7 +1161,6 @@ async function extractAndCompressPDFImages(
               }
 
               if (sizeKB <= preset.maxSizeKB / 2) {
-                console.log(`[extractAndCompressPDFImages] Target met: ${sizeKB.toFixed(2)} KB`)
                 break
               }
 
@@ -1361,7 +1200,6 @@ async function extractAndCompressPDFImages(
                 if (quality < 20) quality = 20
                 if (scaleFactor < 0.5) break
               } catch (fallbackError: any) {
-                console.error(`[extractAndCompressPDFImages] Compression failed: ${fallbackError.message}`)
                 break
               }
             }
@@ -1373,22 +1211,16 @@ async function extractAndCompressPDFImages(
               width: width,
               height: height
             })
-            console.log(`[extractAndCompressPDFImages] Compressed to: ${bestSizeKB.toFixed(2)} KB (from ${(imageBuffer.length / 1024).toFixed(2)} KB)`)
           } else {
-            console.log(`[extractAndCompressPDFImages] Could not compress image ${key}`)
           }
         } catch (imgError: any) {
-          console.log(`[extractAndCompressPDFImages] Error processing image ${key}: ${imgError.message}`)
-          console.log(`[extractAndCompressPDFImages] Stack: ${imgError.stack}`)
           continue
         }
       }
     }
 
-    console.log(`[extractAndCompressPDFImages] Total compressed images found: ${compressedImages.length}`)
     return compressedImages
   } catch (error: any) {
-    console.error(`[extractAndCompressPDFImages] Error: ${error.message}`)
     return compressedImages
   }
 }

@@ -52,7 +52,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(validationResult)
   } catch (error: any) {
-    console.error('Validation error:', error)
     return NextResponse.json(
       { error: 'Validation failed', message: error.message },
       { status: 500 }

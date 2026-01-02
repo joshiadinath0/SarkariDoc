@@ -59,7 +59,6 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
 
       router.push(`/${lang}/processing?${queryParams.toString()}`)
     } catch (error) {
-      console.error('Error uploading file:', error)
       alert('Failed to upload file. Please try again.')
       setIsProcessing(false)
     }

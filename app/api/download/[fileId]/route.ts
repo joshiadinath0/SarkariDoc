@@ -12,9 +12,6 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams
     const preview = searchParams.get('preview') === 'true'
 
-    console.log(`\n========== DOWNLOAD REQUEST ==========`)
-    console.log(`[Download] FileId: ${fileId}`)
-    console.log(`[Download] Preview: ${preview}`)
 
     if (!fileId) {
       return NextResponse.json(
@@ -29,8 +26,6 @@ export async function GET(
     const processedFile = files.find(f => f.startsWith(fileId))
 
     if (!processedFile) {
-      console.error(`[Download] No processed file found for fileId: ${fileId}`)
-      console.error(`[Download] Available files:`, files)
       return NextResponse.json(
         { error: 'File not found' },
         { status: 404 }
@@ -48,7 +43,6 @@ export async function GET(
         const stats = await fs.stat(actualPath)
         const fileBuffer = await fs.readFile(actualPath)
 
-        console.log(`[Download] Serving file: ${processedFile}, Size: ${(stats.size / 1024).toFixed(2)} KB`)
 
         const contentType = getContentType(ext)
         const headers = new Headers()
@@ -62,9 +56,6 @@ export async function GET(
           )
         }
 
-        console.log(`[Download] Serving file (fallback): ${processedFile}`)
-        console.log(`[Download] File size: ${(stats.size / 1024).toFixed(2)} KB`)
-        console.log(`========================================\n`)
 
         return new NextResponse(fileBuffer, {
           status: 200,
@@ -72,7 +63,6 @@ export async function GET(
         })
       }
 
-      console.error(`[Download] File path doesn't exist: ${filePath}`)
       return NextResponse.json(
         { error: 'File not found' },
         { status: 404 }
@@ -83,9 +73,6 @@ export async function GET(
     const fileBuffer = await fs.readFile(filePath)
     const stats = await fs.stat(filePath)
 
-    console.log(`[Download] Serving file: ${filePath}`)
-    console.log(`[Download] File size: ${(stats.size / 1024).toFixed(2)} KB`)
-    console.log(`========================================\n`)
 
     // Determine content type
     const contentType = getContentType(ext)
@@ -107,7 +94,6 @@ export async function GET(
       headers,
     })
   } catch (error: any) {
-    console.error('Download error:', error)
     return NextResponse.json(
       { error: 'Failed to download file', message: error.message },
       { status: 500 }

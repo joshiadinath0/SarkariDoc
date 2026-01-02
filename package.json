@@ -11,9 +11,7 @@
   },
   "dependencies": {
     "canvas": "^3.2.0",
-    "formidable": "^3.5.1",
     "fs-extra": "^11.2.0",
-    "multer": "^1.4.5-lts.1",
     "next": "^14.0.4",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.0.379",
@@ -24,7 +22,6 @@
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
-    "@types/multer": "^1.4.11",
     "@types/node": "^20.10.6",
     "@types/pdfjs-dist": "^2.10.378",
     "@types/react": "^18.2.46",
