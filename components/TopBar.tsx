@@ -5,9 +5,9 @@ export default function TopBar() {
         <div className="bg-[#1b1b1b] text-white text-[10px] md:text-xs py-1.5 px-4 font-sans border-b border-gray-700">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <div className="flex space-x-4">
-                    <span className="hover:underline cursor-pointer">Government of India</span>
+                    <span className="cursor-default font-semibold">Public Document Utility</span>
                     <span className="hidden sm:inline text-gray-400">|</span>
-                    <span className="hidden sm:inline hover:underline cursor-pointer">Ministry of Electronics & IT</span>
+                    <span className="hidden sm:inline cursor-default">Fits Official Standards</span>
                 </div>
                 <div className="flex space-x-3 md:space-x-6">
                     <button className="hover:underline">Skip to Main Content</button>
