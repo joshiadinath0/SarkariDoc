@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, DragEvent } from 'react'
+import { useState, useRef } from 'react'
+import { useAccessibility } from '@/context/AccessibilityContext'
 
 interface UploadBoxProps {
   file: File | null
@@ -11,25 +12,26 @@ interface UploadBoxProps {
 export default function UploadBox({ file, onFileSelect, acceptedFormats }: UploadBoxProps) {
   const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { t } = useAccessibility()
 
-  const handleDragEnter = (e: DragEvent<HTMLDivElement>) => {
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(true)
   }
 
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
   }
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
   }
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
@@ -51,12 +53,12 @@ export default function UploadBox({ file, onFileSelect, acceptedFormats }: Uploa
     // Check file type
     if (acceptedFormats && acceptedFormats.length > 0) {
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
-      const isValidFormat = acceptedFormats.some(format => 
+      const isValidFormat = acceptedFormats.some(format =>
         format.toLowerCase() === fileExtension
       )
-      
+
       if (!isValidFormat) {
-        alert(`Invalid file format. Accepted formats: ${acceptedFormats.join(', ')}`)
+        alert(`${t('upload.invalid_format')} ${acceptedFormats.join(', ')}`)
         return
       }
     }
@@ -64,7 +66,7 @@ export default function UploadBox({ file, onFileSelect, acceptedFormats }: Uploa
     // Check file size (max 10MB for upload)
     const maxSize = 10 * 1024 * 1024 // 10MB
     if (file.size > maxSize) {
-      alert('File size exceeds 10MB limit. Please choose a smaller file.')
+      alert(t('upload.size_limit'))
       return
     }
 
@@ -87,8 +89,8 @@ export default function UploadBox({ file, onFileSelect, acceptedFormats }: Uploa
       className={`
         relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
         transition-all duration-200
-        ${isDragging 
-          ? 'border-blue-500 bg-blue-50 scale-105' 
+        ${isDragging
+          ? 'border-blue-500 bg-blue-50 scale-105'
           : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
         }
         ${file ? 'border-green-400 bg-green-50' : ''}
@@ -118,7 +120,7 @@ export default function UploadBox({ file, onFileSelect, acceptedFormats }: Uploa
             }}
             className="text-sm text-red-600 hover:text-red-700 mt-2"
           >
-            Remove
+            {t('upload.remove')}
           </button>
         </div>
       ) : (
@@ -130,13 +132,13 @@ export default function UploadBox({ file, onFileSelect, acceptedFormats }: Uploa
           </div>
           <div>
             <p className="text-gray-700 font-medium">
-              Drag & drop your document here
+              {t('upload.drag_drop')}
             </p>
-            <p className="text-gray-500 text-sm mt-1">or click to browse</p>
+            <p className="text-gray-500 text-sm mt-1">{t('upload.or_click')}</p>
           </div>
           {acceptedFormats && acceptedFormats.length > 0 && (
             <p className="text-xs text-gray-400">
-              Accepted: {acceptedFormats.join(', ')}
+              {t('upload.accepted')}: {acceptedFormats.join(', ')}
             </p>
           )}
         </div>

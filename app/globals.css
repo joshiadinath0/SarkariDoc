@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --font-scale: 1;
+}
+
+html {
+  font-size: calc(100% * var(--font-scale));
+}
+
 @layer base {
   body {
     @apply bg-gray-50 text-gray-900 antialiased;

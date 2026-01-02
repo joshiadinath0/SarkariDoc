@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams, useRouter, useParams } from 'next/navigation'
 import { ProcessingStatus } from '@/types'
 
 function ProcessingContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const params = useParams()
+  const lang = params.lang as string
   const fileId = searchParams.get('fileId')
   const purpose = searchParams.get('purpose')
 
@@ -20,7 +22,7 @@ function ProcessingContent() {
 
   useEffect(() => {
     if (!fileId || !purpose) {
-      router.push('/')
+      router.push(`/${lang}`)
       return
     }
 
@@ -49,7 +51,7 @@ function ProcessingContent() {
     })
 
     setTimeout(() => {
-      router.push(`/result?fileId=${fileId}&purpose=${purpose}`)
+      router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
     }, 500)
   }
 
@@ -121,7 +123,7 @@ function ProcessingContent() {
               if (data.complete) {
                 // Navigate to result page
                 setTimeout(() => {
-                  router.push(`/result?fileId=${fileId}&purpose=${purpose}`)
+                  router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
                 }, 1000)
                 return
               }
@@ -236,7 +238,7 @@ function ProcessingContent() {
 
         {status.error && (
           <button
-            onClick={() => router.push('/')}
+            onClick={() => router.push(`/${lang}`)}
             className="w-full mt-6 bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Try Again

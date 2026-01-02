@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import { ValidationResult } from '@/types'
 
 function ResultContent() {
   const searchParams = useSearchParams()
+  const params = useParams()
+  const lang = params.lang as string
   const fileId = searchParams.get('fileId')
 
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null)
@@ -92,7 +94,7 @@ function ResultContent() {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Error</h2>
           <p className="text-gray-600 mb-6">{error}</p>
           <a
-            href="/"
+            href={`/${lang}`}
             className="inline-block bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go Back
@@ -238,7 +240,7 @@ function ResultContent() {
                 </button>
               ) : (
                 <button
-                  onClick={() => window.location.href = `/processing?fileId=${fileId}&purpose=${searchParams.get('purpose')}&mode=fix`}
+                  onClick={() => window.location.href = `/${lang}/processing?fileId=${fileId}&purpose=${searchParams.get('purpose')}&mode=fix`}
                   className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center space-x-2"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,7 +254,7 @@ function ResultContent() {
             {/* Back Button */}
             <div className="mt-4">
               <a
-                href="/"
+                href={`/${lang}`}
                 className="block text-center text-gray-600 hover:text-gray-900 transition-colors"
               >
                 Fix Another Document

@@ -4,16 +4,19 @@ export const departments: Department[] = [
     {
         id: 'income_tax',
         name: 'Income Tax Department',
+        name_hi: 'आयकर विभाग',
         logo: '/images/income_tax.png',
         color: 'bg-orange-50 border-orange-200 text-orange-800',
         services: [
             {
                 id: 'pan_card',
                 name: 'PAN Card Application',
+                name_hi: 'पैन कार्ड आवेदन',
                 description: 'Complete form + ID proofs. Clubbed PDF.',
+                description_hi: 'पूरा फॉर्म + आईडी प्रूफ। संयुक्त पीडीएफ।',
                 rules: {
-                    maxSizeKB: 2048, // Verified: 2 MB limit for clubbed documents
-                    minDPI: 200, // Verified: 200 DPI recommended
+                    maxSizeKB: 2048,
+                    minDPI: 200,
                     backgroundColor: '#FFFFFF',
                     orientation: 'portrait',
                     allowedFormats: ['.pdf'],
@@ -23,14 +26,16 @@ export const departments: Department[] = [
             {
                 id: 'pan_photo',
                 name: 'PAN Application Photo',
+                name_hi: 'पैन आवेदन फोटो',
                 description: '3.5x2.5cm photo for PAN application.',
+                description_hi: 'पैन आवेदन के लिए 3.5x2.5cm फोटो।',
                 rules: {
-                    maxSizeKB: 50, // Verified: 50 KB limit
+                    maxSizeKB: 50,
                     minDPI: 200,
                     backgroundColor: '#FFFFFF',
                     orientation: 'portrait',
-                    aspectRatio: { width: 25, height: 35 }, // 2.5cm x 3.5cm
-                    allowedFormats: ['.jpg', '.jpeg'], // JPEG only
+                    aspectRatio: { width: 25, height: 35 },
+                    allowedFormats: ['.jpg', '.jpeg'],
                     removeShadows: true,
                     faceDetection: true,
                 },
@@ -38,9 +43,11 @@ export const departments: Department[] = [
             {
                 id: 'itr_upload',
                 name: 'ITR / Statutory Forms',
+                name_hi: 'आईटीआर / वैधानिक फॉर्म',
                 description: 'General attachments for e-Filing portal.',
+                description_hi: 'ई-फाइलिंग पोर्टल के लिए सामान्य अटैचमेंट।',
                 rules: {
-                    maxSizeKB: 5120, // Verified: 5 MB limit
+                    maxSizeKB: 5120,
                     minDPI: 300,
                     orientation: 'portrait',
                     allowedFormats: ['.pdf', '.zip'],
@@ -52,15 +59,18 @@ export const departments: Department[] = [
     {
         id: 'uidai',
         name: 'Aadhaar (UIDAI)',
+        name_hi: 'आधार (UIDAI)',
         logo: '/images/aadhaar.png',
         color: 'bg-yellow-50 border-yellow-200 text-yellow-800',
         services: [
             {
                 id: 'aadhaar_update',
                 name: 'Identity/Address Proof',
+                name_hi: 'पहचान/पता प्रमाण',
                 description: 'For online Aadhaar update (PoI/PoA).',
+                description_hi: 'ऑनलाइन आधार अपडेट के लिए (PoI/PoA)।',
                 rules: {
-                    maxSizeKB: 2048, // Verified: 2 MB limit
+                    maxSizeKB: 2048,
                     minDPI: 300,
                     backgroundColor: '#FFFFFF',
                     orientation: 'portrait',
@@ -73,25 +83,30 @@ export const departments: Department[] = [
     {
         id: 'state_services',
         name: 'State Gov Services',
+        name_hi: 'राज्य सरकार सेवाएं',
         logo: '/images/state_emblem.png',
         color: 'bg-green-50 border-green-200 text-green-800',
         services: [
             {
                 id: 'caste_cert',
                 name: 'Caste Certificate',
+                name_hi: 'जाति प्रमाण पत्र',
                 description: 'MahaOnline/State portal uploads.',
+                description_hi: 'महाऑनलाइन/राज्य पोर्टल अपलोड।',
                 rules: {
-                    maxSizeKB: 256, // Common state portal limit is often low (~256KB-500KB)
+                    maxSizeKB: 256,
                     minDPI: 200,
                     orientation: 'portrait',
-                    allowedFormats: ['.jpg', '.jpeg', '.pdf'], // Many state portals prefer JPEG
+                    allowedFormats: ['.jpg', '.jpeg', '.pdf'],
                     removeShadows: true,
                 },
             },
             {
                 id: 'income_cert',
                 name: 'Income Certificate',
+                name_hi: 'आय प्रमाण पत्र',
                 description: 'Income proof documents.',
+                description_hi: 'आय प्रमाण दस्तावेज़।',
                 rules: {
                     maxSizeKB: 500,
                     minDPI: 200,
@@ -105,20 +120,23 @@ export const departments: Department[] = [
     {
         id: 'passport_seva',
         name: 'Passport Seva',
+        name_hi: 'पासपोर्ट सेवा',
         logo: '/images/passport.png',
         color: 'bg-blue-50 border-blue-200 text-blue-800',
         services: [
             {
                 id: 'passport_photo',
                 name: 'Passport Photo',
+                name_hi: 'पासपोर्ट फोटो',
                 description: '35x45mm (or 2x2 inch). JPEG Only.',
+                description_hi: '35x45mm (या 2x2 इंच)। केवल JPEG।',
                 rules: {
-                    maxSizeKB: 100, // Verified: 20KB-100KB range
+                    maxSizeKB: 100,
                     minDPI: 300,
                     backgroundColor: '#FFFFFF',
                     orientation: 'portrait',
-                    aspectRatio: { width: 35, height: 45 }, // Standard Indian Passport size
-                    allowedFormats: ['.jpg', '.jpeg'], // JPEG only
+                    aspectRatio: { width: 35, height: 45 },
+                    allowedFormats: ['.jpg', '.jpeg'],
                     removeShadows: true,
                     faceDetection: true,
                 },
@@ -126,9 +144,11 @@ export const departments: Department[] = [
             {
                 id: 'passport_docs',
                 name: 'Supporting Documents',
+                name_hi: 'सहायक दस्तावेज़',
                 description: 'Address proof, Birth proof, etc.',
+                description_hi: 'पता प्रमाण, जन्म प्रमाण, आदि।',
                 rules: {
-                    maxSizeKB: 500, // Typically 500KB per page/doc
+                    maxSizeKB: 500,
                     minDPI: 200,
                     orientation: 'portrait',
                     allowedFormats: ['.pdf'],
@@ -140,15 +160,18 @@ export const departments: Department[] = [
     {
         id: 'banking',
         name: 'Bank KYC',
+        name_hi: 'बैंक केवाईसी',
         logo: '/images/banking.png',
         color: 'bg-indigo-50 border-indigo-200 text-indigo-800',
         services: [
             {
                 id: 'kyc_docs',
                 name: 'KYC Documents',
+                name_hi: 'केवाईसी दस्तावेज़',
                 description: 'PAN/Aadhaar/Voter ID for Banks (SBI, HDFC, ICICI).',
+                description_hi: 'बैंकों (SBI, HDFC, ICICI) के लिए पैन/आधार/वोटर आईडी।',
                 rules: {
-                    maxSizeKB: 500, // Verified: SBI/ICICI specify 500KB
+                    maxSizeKB: 500,
                     minDPI: 200,
                     backgroundColor: '#FFFFFF',
                     orientation: 'landscape',
@@ -159,9 +182,11 @@ export const departments: Department[] = [
             {
                 id: 'kyc_signature',
                 name: 'Signature',
+                name_hi: 'हस्ताक्षर',
                 description: 'Cropped signature on white paper.',
+                description_hi: 'सफेद कागज पर कटा हुआ हस्ताक्षर।',
                 rules: {
-                    maxSizeKB: 50, // Signatures are usually small (20-50KB)
+                    maxSizeKB: 50,
                     minDPI: 300,
                     backgroundColor: '#FFFFFF',
                     orientation: 'landscape',
@@ -175,15 +200,18 @@ export const departments: Department[] = [
     {
         id: 'general_tools',
         name: 'General Tools',
+        name_hi: 'सामान्य टूल',
         logo: '🛠️',
         color: 'bg-gray-50 border-gray-200 text-gray-800',
         services: [
             {
                 id: 'compress_pdf',
                 name: 'Compress PDF',
+                name_hi: 'पीडीएफ कंप्रेस करें',
                 description: 'Reduce PDF size while maintaining quality.',
+                description_hi: 'गुणवत्ता बनाए रखते हुए पीडीएफ का आकार कम करें।',
                 rules: {
-                    maxSizeKB: 500, // Standard compression target
+                    maxSizeKB: 500,
                     minDPI: 150,
                     orientation: 'any',
                     allowedFormats: ['.pdf'],
@@ -193,7 +221,9 @@ export const departments: Department[] = [
             {
                 id: 'compress_image',
                 name: 'Compress Image',
+                name_hi: 'छवि कंप्रेस करें',
                 description: 'Optimize JPG/PNG images for web upload.',
+                description_hi: 'वेब अपलोड के लिए JPG/PNG छवियों को अनुकूलित करें।',
                 rules: {
                     maxSizeKB: 200,
                     minDPI: 200,

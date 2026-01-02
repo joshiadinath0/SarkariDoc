@@ -15,13 +15,16 @@ export interface DocumentRule {
 export interface Service {
   id: string
   name: string
+  name_hi?: string
   description: string
+  description_hi?: string
   rules: DocumentRule
 }
 
 export interface Department {
   id: string
   name: string
+  name_hi?: string
   logo: string // URL or icon component name
   color: string
   services: Service[]

@@ -1,33 +1,36 @@
 import React from 'react'
-
-const steps = [
-    {
-        title: "1. Select Document Type",
-        description: "Choose what you are applying for (PAN, Aadhaar, Passport, SBI KYC, etc.). We have pre-set rules for each.",
-        icon: "📄"
-    },
-    {
-        title: "2. Upload File",
-        description: "Upload your photo, signature, or PDF. We accept JPG, PNG, and PDF formats up to 10MB.",
-        icon: "upload"
-    },
-    {
-        title: "3. Auto-Processing",
-        description: "Our AI automatically resizes to cm/mm, compresses to KB, removes shadows, and fixes DPI.",
-        icon: "⚙️"
-    },
-    {
-        title: "4. Download",
-        description: "Get a verified file that is 100% compliant with the government portal's upload rules.",
-        icon: "✅"
-    }
-]
+import { useAccessibility } from '@/context/AccessibilityContext'
 
 export default function HowItWorks() {
+    const { t } = useAccessibility()
+
+    const steps = [
+        {
+            title: t('how_it_works.step1_title'),
+            description: t('how_it_works.step1_desc'),
+            icon: "📄"
+        },
+        {
+            title: t('how_it_works.step2_title'),
+            description: t('how_it_works.step2_desc'),
+            icon: "upload"
+        },
+        {
+            title: t('how_it_works.step3_title'),
+            description: t('how_it_works.step3_desc'),
+            icon: "⚙️"
+        },
+        {
+            title: t('how_it_works.step4_title'),
+            description: t('how_it_works.step4_desc'),
+            icon: "✅"
+        }
+    ]
+
     const jsonLd = {
         '@context': 'https://schema.org',
         '@type': 'HowTo',
-        name: 'How to Resize Documents for Indian Government Portals',
+        name: t('how_it_works.title'),
         step: steps.map((step, index) => ({
             '@type': 'HowToStep',
             position: index + 1,
@@ -44,8 +47,8 @@ export default function HowItWorks() {
             />
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-gray-900">How to Resize Your Documents</h2>
-                    <p className="mt-4 text-lg text-gray-600">Follow these simple steps to fix your documents in seconds.</p>
+                    <h2 className="text-3xl font-bold text-gray-900">{t('how_it_works.title')}</h2>
+                    <p className="mt-4 text-lg text-gray-600">{t('how_it_works.subtitle')}</p>
                 </div>
 
                 <div className="grid gap-8 md:grid-cols-4">

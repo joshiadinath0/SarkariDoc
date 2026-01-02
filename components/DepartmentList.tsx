@@ -2,6 +2,7 @@
 
 import { Department, Service } from '@/types'
 import { useState } from 'react'
+import { useAccessibility } from '@/context/AccessibilityContext'
 
 interface DepartmentListProps {
     departments: Department[]
@@ -10,6 +11,7 @@ interface DepartmentListProps {
 
 export default function DepartmentList({ departments, onSelectService }: DepartmentListProps) {
     const [selectedDept, setSelectedDept] = useState<string | null>(null)
+    const { t, language } = useAccessibility()
 
     // Separate General Tools from other departments
     const generalTools = departments.find(d => d.id === 'general_tools')
@@ -22,7 +24,7 @@ export default function DepartmentList({ departments, onSelectService }: Departm
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
                     <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4 flex items-center">
                         <span className="w-2 h-2 rounded-full bg-blue-500 mr-2"></span>
-                        Quick Tools
+                        {t('departments.quick_tools')}
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {generalTools.services.map((service) => (
@@ -44,10 +46,10 @@ export default function DepartmentList({ departments, onSelectService }: Departm
                                 </div>
                                 <div className="text-left">
                                     <h4 className="font-semibold text-gray-900 group-hover:text-blue-700">
-                                        {service.name}
+                                        {language === 'hi' && service.name_hi ? service.name_hi : service.name}
                                     </h4>
                                     <p className="text-sm text-gray-500">
-                                        {service.description}
+                                        {language === 'hi' && service.description_hi ? service.description_hi : service.description}
                                     </p>
                                 </div>
                             </button>
@@ -60,7 +62,7 @@ export default function DepartmentList({ departments, onSelectService }: Departm
             <div className="space-y-4">
                 <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider flex items-center">
                     <span className="w-2 h-2 rounded-full bg-indigo-500 mr-2"></span>
-                    Government Departments
+                    {t('departments.gov_depts')}
                 </h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                     {serviceDepartments.map((dept) => (
@@ -77,11 +79,13 @@ export default function DepartmentList({ departments, onSelectService }: Departm
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={dept.logo}
-                                    alt={dept.name}
+                                    alt={language === 'hi' && dept.name_hi ? dept.name_hi : dept.name}
                                     className="w-full h-full object-contain"
                                 />
                             </div>
-                            <span className="font-semibold text-gray-800 text-sm leading-tight">{dept.name}</span>
+                            <span className="font-semibold text-gray-800 text-sm leading-tight">
+                                {language === 'hi' && dept.name_hi ? dept.name_hi : dept.name}
+                            </span>
                         </button>
                     ))}
                 </div>
@@ -91,8 +95,13 @@ export default function DepartmentList({ departments, onSelectService }: Departm
             {selectedDept && (
                 <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 animate-slide-up">
                     <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
-                        <span className="mr-2">select Document for</span>
-                        <span className="text-blue-600">{departments.find(d => d.id === selectedDept)?.name}</span>
+                        <span className="mr-2">{t('departments.select_doc')}</span>
+                        <span className="text-blue-600">
+                            {(() => {
+                                const dept = departments.find(d => d.id === selectedDept);
+                                return language === 'hi' && dept?.name_hi ? dept.name_hi : dept?.name;
+                            })()}
+                        </span>
                     </h3>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -104,14 +113,14 @@ export default function DepartmentList({ departments, onSelectService }: Departm
                             >
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-semibold text-gray-900 group-hover:text-blue-700">
-                                        {service.name}
+                                        {language === 'hi' && service.name_hi ? service.name_hi : service.name}
                                     </h4>
                                     <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded group-hover:bg-blue-200 group-hover:text-blue-800">
-                                        Max {service.rules.maxSizeKB}KB
+                                        {t('departments.max_size')} {service.rules.maxSizeKB}KB
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-500 group-hover:text-gray-700 line-clamp-2">
-                                    {service.description}
+                                    {language === 'hi' && service.description_hi ? service.description_hi : service.description}
                                 </p>
                             </button>
                         ))}

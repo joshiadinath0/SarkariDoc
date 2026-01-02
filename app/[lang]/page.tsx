@@ -10,9 +10,11 @@ import HowItWorks from '@/components/HowItWorks'
 import SupportedDocs from '@/components/SupportedDocs'
 import FAQ from '@/components/FAQ'
 import { departments, getService } from '@/lib/departments'
+import { useAccessibility } from '@/context/AccessibilityContext'
 
-export default function HomePage() {
+export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 'hi' } }) {
   const router = useRouter()
+  const { t } = useAccessibility()
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
@@ -55,7 +57,7 @@ export default function HomePage() {
         queryParams.append('maxSizeKB', customSizeKB.toString())
       }
 
-      router.push(`/processing?${queryParams.toString()}`)
+      router.push(`/${lang}/processing?${queryParams.toString()}`)
     } catch (error) {
       console.error('Error uploading file:', error)
       alert('Failed to upload file. Please try again.')
@@ -70,28 +72,31 @@ export default function HomePage() {
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3" aria-label="Main navigation">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Logo className="w-14 h-14" />
-              <div className="flex flex-col">
-                <h1 className="text-2xl font-bold text-primary-600 tracking-tight leading-none">SarkariDoc</h1>
-                <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-widest mt-0.5">Public Document Utility</span>
-              </div>
+              <a href={`/${lang}`} className="flex items-center space-x-4">
+                <Logo className="w-14 h-14" />
+                <div className="flex flex-col">
+                  <h1 className="text-2xl font-bold text-primary-600 tracking-tight leading-none">SarkariDoc</h1>
+                  <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-widest mt-0.5">{t('topbar.utility_name')}</span>
+                </div>
+              </a>
             </div>
           </div>
         </nav>
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <main id="main-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 focus:outline-none">
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-block bg-primary-50 border border-primary-200 text-primary-800 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
-            Trusted by 50,000+ Indians
+            {t('hero.badge')}
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
-            Resize Documents for <span className="text-primary-600">Government Portals</span>
+            {t('hero.title_part1')} <span className="text-primary-600">{t('hero.title_part2')}</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Officially compliant tool to <strong>resize, compress, and fix</strong> PDF & Images for Income Tax, Aadhaar, Passport, and Bank KYC.
-          </p>
+          <p
+            className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: t('hero.description') }}
+          />
         </div>
 
         {/* Department Selection */}
@@ -113,10 +118,13 @@ export default function HomePage() {
             <div className="space-y-6">
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold text-gray-900">
-                  Upload for {selectedService.name}
+                  {t('common.upload_for')} {(() => {
+                    const lang = (useAccessibility() as any).language;
+                    return lang === 'hi' && selectedService.name_hi ? selectedService.name_hi : selectedService.name;
+                  })()}
                 </h3>
                 <p className="text-gray-500 text-sm mt-1">
-                  Requirements: Max {selectedService.rules.maxSizeKB}KB • {selectedService.rules.orientation} • {selectedService.rules.allowedFormats.join(', ')}
+                  {t('common.requirements')}: {t('departments.max_size')} {selectedService.rules.maxSizeKB}KB • {selectedService.rules.orientation} • {selectedService.rules.allowedFormats.join(', ')}
                 </p>
               </div>
 
@@ -133,7 +141,7 @@ export default function HomePage() {
               {isGeneralTool && (
                 <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                   <label className="block text-sm font-medium text-blue-900 mb-2">
-                    Target File Size (KB)
+                    {t('common.target_size')}
                   </label>
                   <div className="flex items-center space-x-2">
                     <input
@@ -146,7 +154,7 @@ export default function HomePage() {
                     <span className="text-sm text-gray-500">KB</span>
                   </div>
                   <p className="text-xs text-blue-600 mt-2">
-                    Leave empty to use default ({selectedService.rules.maxSizeKB} KB)
+                    {t('common.leave_empty')} ({selectedService.rules.maxSizeKB} KB)
                   </p>
                 </div>
               )}
@@ -163,10 +171,10 @@ export default function HomePage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Analyzing...
+                    {t('common.analyzing')}
                   </span>
                 ) : (
-                  'Analyze & Fix'
+                  t('common.analyze_fix')
                 )}
               </button>
             </div>
