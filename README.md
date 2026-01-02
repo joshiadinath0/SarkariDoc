@@ -1,10 +1,10 @@
-# DocFix India – Bank & Govt PDF Fixer
+# SarkariDoc – Bank & Govt PDF Fixer
 
 A production-ready web application for fixing and validating Indian documents (PAN, Aadhaar, Passport, Bank KYC, Income Tax) to meet official upload requirements.
 
 ## 🎯 Overview
 
-DocFix India is a smart document processing SaaS that automatically:
+SarkariDoc is a smart document processing SaaS that automatically:
 - Validates document size, DPI, format, and quality
 - Compresses files to meet size requirements
 - Whitens backgrounds and removes shadows
@@ -34,7 +34,7 @@ DocFix India is a smart document processing SaaS that automatically:
 ### Project Structure
 
 ```
-docfix-india/
+sarkaridoc/
 ├── app/
 │   ├── api/
 │   │   ├── upload/route.ts          # File upload endpoint
@@ -122,7 +122,7 @@ docfix-india/
 
 1. **Clone or navigate to the project directory**:
    ```bash
-   cd docfix-india
+   cd sarkaridoc
    ```
 
 2. **Install dependencies**:

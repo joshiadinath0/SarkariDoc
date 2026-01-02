@@ -1,7 +1,7 @@
 {
-  "name": "docfix-india",
+  "name": "sarkaridoc",
   "version": "1.0.0",
-  "description": "DocFix India – Bank & Govt PDF Fixer - Production-ready document processing SaaS",
+  "description": "SarkariDoc – Bank & Govt PDF Fixer - Production-ready document processing SaaS",
   "private": true,
   "scripts": {
     "dev": "next dev",

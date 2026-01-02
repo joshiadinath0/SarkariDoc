@@ -47,9 +47,9 @@ export async function GET(
       if (await fs.pathExists(actualPath)) {
         const stats = await fs.stat(actualPath)
         const fileBuffer = await fs.readFile(actualPath)
-        
+
         console.log(`[Download] Serving file: ${processedFile}, Size: ${(stats.size / 1024).toFixed(2)} KB`)
-        
+
         const contentType = getContentType(ext)
         const headers = new Headers()
         headers.set('Content-Type', contentType)
@@ -58,20 +58,20 @@ export async function GET(
         if (!preview) {
           headers.set(
             'Content-Disposition',
-            `attachment; filename="docfix_${fileId}${ext}"`
+            `attachment; filename="sarkaridoc_${fileId}${ext}"`
           )
         }
 
         console.log(`[Download] Serving file (fallback): ${processedFile}`)
         console.log(`[Download] File size: ${(stats.size / 1024).toFixed(2)} KB`)
         console.log(`========================================\n`)
-        
+
         return new NextResponse(fileBuffer, {
           status: 200,
           headers,
         })
       }
-      
+
       console.error(`[Download] File path doesn't exist: ${filePath}`)
       return NextResponse.json(
         { error: 'File not found' },
@@ -82,7 +82,7 @@ export async function GET(
     // Read file
     const fileBuffer = await fs.readFile(filePath)
     const stats = await fs.stat(filePath)
-    
+
     console.log(`[Download] Serving file: ${filePath}`)
     console.log(`[Download] File size: ${(stats.size / 1024).toFixed(2)} KB`)
     console.log(`========================================\n`)
@@ -98,7 +98,7 @@ export async function GET(
     if (!preview) {
       headers.set(
         'Content-Disposition',
-        `attachment; filename="docfix_${fileId}${ext}"`
+        `attachment; filename="sarkaridoc_${fileId}${ext}"`
       )
     }
 

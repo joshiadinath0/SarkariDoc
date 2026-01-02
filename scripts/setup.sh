@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Setup script for DocFix India
+# Setup script for SarkariDoc
 
-echo "🚀 Setting up DocFix India..."
+echo "🚀 Setting up SarkariDoc..."
 
 # Create required directories
 echo "📁 Creating directories..."

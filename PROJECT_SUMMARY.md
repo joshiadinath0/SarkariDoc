@@ -1,4 +1,4 @@
-# DocFix India - Project Summary
+# SarkariDoc - Project Summary
 
 ## ✅ What Has Been Built
 
@@ -75,7 +75,7 @@ A complete, production-ready web application for fixing and validating Indian do
 
 ### File Structure
 ```
-docfix-india/
+sarkaridoc/
 ├── app/                    # Next.js app directory
 │   ├── api/                # API routes
 │   ├── processing/         # Processing page

@@ -2,7 +2,7 @@
 
 ## System Design
 
-DocFix India is built as a modern full-stack Next.js application with a focus on local processing and real-time feedback.
+SarkariDoc is built as a modern full-stack Next.js application with a focus on local processing and real-time feedback.
 
 ## Component Architecture
 

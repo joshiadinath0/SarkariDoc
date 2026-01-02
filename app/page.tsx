@@ -4,6 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import UploadBox from '@/components/UploadBox'
 import DepartmentList from '@/components/DepartmentList'
+import TopBar from '@/components/TopBar'
+import Logo from '@/components/Logo'
+import HowItWorks from '@/components/HowItWorks'
+import SupportedDocs from '@/components/SupportedDocs'
+import FAQ from '@/components/FAQ'
 import { departments, getService } from '@/lib/departments'
 
 export default function HomePage() {
@@ -59,17 +64,16 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
-      <header className="border-b border-gray-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Main navigation">
+    <div className="min-h-screen bg-gray-50">
+      <TopBar />
+      <header className="border-b-4 border-b-saffron-500 bg-white shadow-sm sticky top-0 z-50">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3" aria-label="Main navigation">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center" aria-hidden="true">
-                <span className="text-white font-bold text-xl">DF</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">DocFix India</h1>
-                <p className="text-xs text-gray-500">Resize & Compress for Govt Portals</p>
+            <div className="flex items-center space-x-4">
+              <Logo className="w-14 h-14" />
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-bold text-primary-600 tracking-tight leading-none">SarkariDoc</h1>
+                <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-widest mt-0.5">Public Document Utility</span>
               </div>
             </div>
           </div>
@@ -77,14 +81,16 @@ export default function HomePage() {
       </header>
 
       {/* Hero Section */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12 animate-fade-in">
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Resize & Compress Documents
-            <span className="block text-blue-600">For Indian Govt Portals</span>
+          <div className="inline-block bg-primary-50 border border-primary-200 text-primary-800 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+            Trusted by 50,000+ Indians
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+            Resize Documents for <span className="text-primary-600">Government Portals</span>
           </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Free tool to <strong>resize, compress, and fix</strong> PDF & Images for Income Tax, Aadhaar, Passport, and Bank KYC uploads. 100% compliant and secure.
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            Officially compliant tool to <strong>resize, compress, and fix</strong> PDF & Images for Income Tax, Aadhaar, Passport, and Bank KYC.
           </p>
         </div>
 
@@ -167,6 +173,11 @@ export default function HomePage() {
           </div>
         )}
       </main>
+
+      {/* SEO Content Sections */}
+      <HowItWorks />
+      <SupportedDocs />
+      <FAQ />
     </div>
   )
 }

@@ -9,16 +9,22 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#f0f4ff',
+          100: '#dbe4ff',
+          200: '#bacaff',
+          300: '#8bafff',
+          400: '#5887ff',
+          500: '#2b5bff',
+          600: '#000080', // Navy Blue (Official)
+          700: '#000066',
+          800: '#00004d',
+          900: '#000033',
+        },
+        saffron: {
+          500: '#FF9933', // Official Saffron
+        },
+        indiaGreen: {
+          500: '#138808', // Official Green
         },
       },
       animation: {
