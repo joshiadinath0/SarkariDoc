@@ -34,9 +34,7 @@ export default function TopBar() {
         <div className="bg-[#1b1b1b] text-white text-[10px] md:text-xs py-1.5 px-4 font-sans border-b border-gray-700">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <div className="flex space-x-4">
-                    <span className="cursor-default font-semibold">{t('topbar.utility_name')}</span>
-                    <span className="hidden sm:inline text-gray-400">|</span>
-                    <span className="hidden sm:inline cursor-default">{t('topbar.official_standard')}</span>
+                    <span className="hidden sm:inline cursor-default text-gray-300 font-medium">{t('topbar.official_standard')}</span>
                 </div>
                 <div className="flex space-x-3 md:space-x-6">
                     <button onClick={handleSkip} className="hover:underline">{t('topbar.skip_link')}</button>
