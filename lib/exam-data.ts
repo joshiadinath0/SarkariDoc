@@ -222,5 +222,46 @@ export const examTools: ExamTool[] = [
         rules: { maxSizeKB: 50, width: 150, height: 200, format: ['jpg'] },
         description: 'Resize image for Maharashtra Public Service Commission applications.',
         description_hi: 'महाराष्ट्र लोक सेवा आयोग के आवेदनों के लिए छवि रीसाइज करें।'
+    },
+
+    // General Tools (referenced in Sidebar)
+    {
+        slug: 'mask-aadhaar',
+        title: 'Aadhaar Number Masker',
+        title_hi: 'आधार नंबर मास्कर',
+        examName: 'Privacy Tool',
+        examName_hi: 'गोपनीयता उपकरण',
+        organization: 'SarkariDoc',
+        organization_hi: 'सरकारीडॉक',
+        type: 'document',
+        rules: { maxSizeKB: 2000, format: ['jpg', 'jpeg', 'png', 'pdf'] },
+        description: 'Automatically mask the first 8 digits of your Aadhaar number for privacy compliance.',
+        description_hi: 'गोपनीयता अनुपालन के लिए अपने आधार नंबर के पहले 8 अंकों को स्वचालित रूप से मास्क करें।'
+    },
+    {
+        slug: 'compress-pdf',
+        title: 'PDF Compressor',
+        title_hi: 'पीडीएफ कंप्रेसर',
+        examName: 'General Tool',
+        examName_hi: 'सामान्य उपकरण',
+        organization: 'SarkariDoc',
+        organization_hi: 'सरकारीडॉक',
+        type: 'document',
+        rules: { maxSizeKB: 500, format: ['pdf'] },
+        description: 'Compress PDF files to meet government portal size requirements.',
+        description_hi: 'सरकारी पोर्टल आकार आवश्यकताओं को पूरा करने के लिए पीडीएफ फाइलों को कंप्रेस करें।'
+    },
+    {
+        slug: 'darken-signature',
+        title: 'Signature Darkener',
+        title_hi: 'हस्ताक्षर गहरा करें',
+        examName: 'General Tool',
+        examName_hi: 'सामान्य उपकरण',
+        organization: 'SarkariDoc',
+        organization_hi: 'सरकारीडॉक',
+        type: 'signature',
+        rules: { maxSizeKB: 50, format: ['jpg', 'jpeg', 'png'] },
+        description: 'Make faint scanned signatures deep black for better visibility.',
+        description_hi: 'बेहतर दृश्यता के लिए धुंधले स्कैन किए गए हस्ताक्षरों को गहरा काला बनाएं।'
     }
 ]

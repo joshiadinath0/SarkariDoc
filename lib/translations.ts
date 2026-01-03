@@ -1,7 +1,7 @@
 export const translations = {
     en: {
         hero: {
-            badge: "Trusted by 50,000+ Indians",
+            badge: "Trusted by 50,000+ Indians 🇮🇳",
             title_part1: "Resize Documents for",
             title_part2: "Government Portals",
             description: "Officially compliant tool to <strong>resize, compress, and fix</strong> PDF & Images for Income Tax, Aadhaar, Passport, and Bank KYC."
@@ -83,7 +83,7 @@ export const translations = {
     },
     hi: {
         hero: {
-            badge: "50,000+ भारतीयों द्वारा विश्वसनीय",
+            badge: "50,000+ भारतीयों द्वारा विश्वसनीय 🇮🇳",
             title_part1: "सरकारी पोर्टलों के लिए",
             title_part2: "दस्तावेज़ों का आकार बदलें",
             description: "आयकर, आधार, पासपोर्ट और बैंक केवाईसी के लिए पीडीएफ और छवियों को <strong>रीसाइज, कंप्रेस और फिक्स</strong> करने का आधिकारिक टूल।"

@@ -3,6 +3,7 @@
 import { Department, Service } from '@/types'
 import { useState } from 'react'
 import { useAccessibility } from '@/context/AccessibilityContext'
+import { DepartmentIcons, DepartmentIconKey } from './DepartmentIcons'
 
 interface DepartmentListProps {
     departments: Department[]
@@ -100,12 +101,7 @@ export default function DepartmentList({ departments, onSelectService }: Departm
                                 }`}
                         >
                             <div className="w-16 h-16 relative flex items-center justify-center">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
-                                    src={dept.logo}
-                                    alt={language === 'hi' && dept.name_hi ? dept.name_hi : dept.name}
-                                    className="w-full h-full object-contain"
-                                />
+                                {DepartmentIcons[dept.logo as DepartmentIconKey]}
                             </div>
                             <span className="font-semibold text-gray-800 text-sm leading-tight">
                                 {language === 'hi' && dept.name_hi ? dept.name_hi : dept.name}

@@ -646,7 +646,16 @@ async function processImage(
 
     let image = sharp(filePath)
     const metadata = await image.metadata()
-    const targetDPI = options.dpi || preset.minDPI || 72
+    let targetDPI = 600 // Global Rule: Default to high-quality 600 DPI for everything
+
+    if (purpose === 'dpi_fixer') {
+      // DPI Injector Exception:
+      // Respect user choice (options.dpi).
+      // If not set, default to whichever is higher: 600 DPI or the Current Image DPI.
+      // This prevents downsampling a high-res scan while upgrading low-res ones.
+      const currentDPI = metadata.density || 72
+      targetDPI = options.dpi || Math.max(600, currentDPI)
+    }
 
     reportProgress('processing', 50, 'Analyzing image...')
 
@@ -756,6 +765,25 @@ async function processImage(
       currentHeight = newMeta.height || currentHeight
     }
 
+    // CHECKPOINT: Force processing of filters (darkening, whitening) before compression loop
+    // This prevents Sharp pipeline from hanging due to too many pending operations
+    if (options.darkenSignature || preset.removeShadows || options.autoCrop) {
+      try {
+        reportProgress('optimization', 69, 'Applying filters...')
+        // Use PNG for intermediate buffer to preserve maximum sharpness/quality
+        // JPEG here would cause "generation loss" leading to blurriness
+        const tempBuffer = await image.png().toBuffer()
+        image = sharp(tempBuffer)
+        const tempMeta = await image.metadata()
+        currentWidth = tempMeta.width || currentWidth
+        currentHeight = tempMeta.height || currentHeight
+      } catch (e) {
+        // If filters fail or hang, log and continue without them (or with pending ops)
+        console.warn('Filter application checkpoint failed, continuing with pipeline:', e)
+        reportProgress('optimization', 69, 'Filters complex, optimizing on-the-fly...')
+      }
+    }
+
     let quality = 80
     let scaleFactor = 1.0
     let compressedBuffer: Buffer | null = null
@@ -770,10 +798,21 @@ async function processImage(
         const newWidth = Math.round(currentWidth * scaleFactor)
         if (newWidth < 300) break
 
-        const compressionPipeline = image
+        let compressionPipeline = image
           .clone()
           .resize(newWidth, null, { fit: 'inside', kernel: sharp.kernel.lanczos3 })
           .withMetadata({ density: targetDPI })
+
+        if (options.darkenSignature) {
+          // Improve edge definition for signatures
+          compressionPipeline = compressionPipeline.sharpen()
+          // If darker signature is requested, ensure we use a threshold-like logic for crispness
+          // by converting grayscale to near-black-and-white
+          if (!isJPEG) {
+            // For PNG, we can afford to be more aggressive with colors as it handles solid colors well
+            // compressionPipeline = compressionPipeline.threshold(160) // Optional: might be too risky
+          }
+        }
 
         if (isJPEG) {
           compressedBuffer = await compressionPipeline.jpeg({ quality, mozjpeg: true }).toBuffer()
@@ -1243,15 +1282,32 @@ async function whitenBackground(image: sharp.Sharp): Promise<sharp.Sharp> {
 
 async function darkenSignature(image: sharp.Sharp): Promise<sharp.Sharp> {
   try {
-    // Balanced approach: grayscale -> boost contrast -> reduce brightness
+    // Aggressive darkening for faint signatures
+    // 1. Grayscale
+    // 2. Normalize (stretch range)
+    // Soft Thresholding / High Contrast:
+    // Linear(slope, offset) -> slope * input + offset
+    // 2.0x contrast (doubles the difference between light and dark)
+    // -0.2 offset (darkens everything slightly, but not enough to wipe out ink)
     return image
       .grayscale()
-      .normalize()
-      .modulate({
-        brightness: 0.85,
-        saturation: 0,
-      })
-      .clahe({ width: 200, height: 200 }) // Local contrast enhancement
+
+      // 1. Gamma 2.2: Bring out faint details
+      .gamma(2.2)
+
+      // 2. Pre-Threshold Blur (0.8): Thicken and connect dots
+      .blur(0.8)
+
+      // 3. Threshold (210): Force B&W
+      // High value (210) catches even very light grey ink
+      .threshold(210)
+
+      // 4. Post-Threshold Smoothing (The Fix for 'Sharp/Jaggies'):
+      // Micro-blur to soften the harsh binary pixel steps
+      .blur(0.5)
+
+      // 5. Final Sharpen: Tighten the soft edges back to a clean line
+      .sharpen()
   } catch (error) {
     return image
   }
