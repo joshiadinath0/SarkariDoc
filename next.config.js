@@ -2,21 +2,14 @@
 const nextConfig = {
   reactStrictMode: true,
   experimental: {
-    serverComponentsExternalPackages: ['canvas', 'pdfjs-dist'],
+    serverComponentsExternalPackages: ['canvas', 'pdfjs-dist', 'tesseract.js', 'sharp'],
     serverActions: {
       bodySizeLimit: '10mb',
     },
   },
 
   webpack: (config, { isServer }) => {
-    // Mark canvas as external for server-side only
-    if (isServer) {
-      config.externals = config.externals || []
-      config.externals.push({
-        canvas: 'commonjs canvas',
-      })
-    } else {
-      // For client-side, ignore canvas
+    if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         canvas: false,

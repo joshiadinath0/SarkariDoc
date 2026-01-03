@@ -68,6 +68,17 @@ export const translations = {
             cat2: "Exam Portals",
             cat3: "Banking & Finance",
             cat4: "State Portals",
+        },
+        advanced: {
+            title: "Advanced Sarkari Tools",
+            darken_signature: "Darken Signature (Deep Black)",
+            dpi_label: "Target DPI",
+            auto_crop: "Auto-Crop & Deskew",
+            pdf_password: "PDF Password (if protected)",
+            pdf_password_placeholder: "Enter password to unlock...",
+            self_attest: "Bulk Self-Attestation",
+            self_attest_desc: "Upload your signature once to stamp it on all pages",
+            upload_signature: "Upload Signature",
         }
     },
     hi: {
@@ -128,7 +139,7 @@ export const translations = {
             step1_desc: "चुनें कि आप किसके लिए आवेदन कर रहे हैं (पैन, आधार, पासपोर्ट, एसबीआई केवाईसी, आदि)। हमारे पास प्रत्येक के लिए पूर्व-निर्धारित नियम हैं।",
             step2_title: "2. फ़ाइल अपलोड करें",
             step2_desc: "अपनी फोटो, सिग्नेचर या पीडीएफ अपलोड करें। हम 10MB तक के JPG, PNG और PDF फॉर्मेट स्वीकार करते हैं।",
-            step3_title: "3. ऑटो-प्रोसेसिंग",
+            step3_title: "3. ऑटो-प्रोcessing",
             step3_desc: "हमारा एआई स्वचालित रूप से cm/mm में रीसाइज करता है, KB में कंप्रेस करता है, परछाई हटाता है और DPI ठीक करता है।",
             step4_title: "4. डाउनलोड करें",
             step4_desc: "एक सत्यापित फ़ाइल प्राप्त करें जो सरकारी पोर्टल के अपलोड नियमों के साथ 100% अनुपालन करती है।",
@@ -139,6 +150,17 @@ export const translations = {
             cat2: "परीक्षा पोर्टल",
             cat3: "बैंकिंग और वित्त",
             cat4: "राज्य पोर्टल",
+        },
+        advanced: {
+            title: "उन्नत सरकारी टूल",
+            darken_signature: "हस्ताक्षर गहरा करें (गहरा काला)",
+            dpi_label: "लक्ष्य DPI",
+            auto_crop: "ऑटो-क्रॉप और डेस्क्यू",
+            pdf_password: "PDF पासवर्ड (यदि सुरक्षित है)",
+            pdf_password_placeholder: "अनलॉक करने के लिए पासवर्ड डालें...",
+            self_attest: "बल्क सेल्फ-अटैस्टेशन",
+            self_attest_desc: "सभी पृष्ठों पर स्टैम्प लगाने के लिए अपना हस्ताक्षर एक बार अपलोड करें",
+            upload_signature: "हस्ताक्षर अपलोड करें",
         }
     }
 }

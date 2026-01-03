@@ -1,10 +1,16 @@
 import fs from 'fs-extra'
 import path from 'path'
 import { v4 as uuidv4 } from 'uuid'
+import os from 'os'
 
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads')
-const PROCESSED_DIR = path.join(process.cwd(), 'processed')
-const TEMP_DIR = path.join(process.cwd(), 'temp')
+// Use /tmp for serverless/production to avoid read-only filesystem errors
+const BASE_DIR = process.env.NODE_ENV === 'production'
+  ? path.join(os.tmpdir(), 'sarkaridoc')
+  : process.cwd()
+
+const UPLOAD_DIR = path.join(BASE_DIR, 'uploads')
+const PROCESSED_DIR = path.join(BASE_DIR, 'processed')
+const TEMP_DIR = path.join(BASE_DIR, 'temp')
 
 // Ensure directories exist
 export async function ensureDirectories() {

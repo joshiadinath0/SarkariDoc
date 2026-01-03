@@ -1,7 +1,10 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter, useParams } from 'next/navigation'
+// Use the legacy build for better Node compatibility if needed, 
+// but in 'use client' we usually want the standard one. 
+// However, the issue might be the way the stream is parsed.
 import { ProcessingStatus } from '@/types'
 
 function ProcessingContent() {
@@ -20,21 +23,11 @@ function ProcessingContent() {
 
   const mode = searchParams.get('mode')
 
-  useEffect(() => {
-    if (!fileId || !purpose) {
-      router.push(`/${lang}`)
-      return
-    }
+  // Use a ref to prevent multiple process calls in dev (Strict Mode)
+  const processingStartedRef = useRef(false)
 
-    if (mode === 'fix') {
-      processDocument(fileId, purpose)
-    } else {
-      // Analyze mode (default)
-      analyzeDocument()
-    }
-  }, [fileId, purpose, mode, router])
 
-  const analyzeDocument = async () => {
+  const analyzeDocument = useCallback(async () => {
     setStatus({
       step: 'Validation',
       progress: 0,
@@ -53,66 +46,68 @@ function ProcessingContent() {
     setTimeout(() => {
       router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
     }, 500)
-  }
+  }, [fileId, purpose, lang, router])
 
-  const processDocument = async (fileId: string, purpose: string) => {
+  const processDocument = useCallback(async (fileId: string, purpose: string) => {
+    if (processingStartedRef.current) return
+    processingStartedRef.current = true
+
     try {
       setStatus({
-        step: 'Uploading',
+        step: 'Initializing',
         progress: 10,
-        message: 'File uploaded successfully',
+        message: 'Starting processing...',
       })
 
-      // Start processing
+      // Extract options to avoid depending on the whole searchParams object
+      const maxSizeKB = searchParams.get('maxSizeKB')
+      const password = searchParams.get('password')
+      const dpi = searchParams.get('dpi')
+      const darkenSignature = searchParams.get('darkenSignature')
+      const autoCrop = searchParams.get('autoCrop')
+      const sigId = searchParams.get('sigId')
+
       const response = await fetch('/api/process', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fileId,
           purpose,
-          maxSizeKB: searchParams.get('maxSizeKB') ? Number(searchParams.get('maxSizeKB')) : undefined
+          maxSizeKB: maxSizeKB ? Number(maxSizeKB) : undefined,
+          password,
+          dpi: dpi ? Number(dpi) : undefined,
+          darkenSignature: darkenSignature === 'true',
+          autoCrop: autoCrop === 'true',
+          selfAttestSignatureId: sigId,
         }),
       })
 
       if (!response.ok) {
-        const errorText = await response.text()
-        let errorMessage = 'Processing failed'
-        try {
-          const error = JSON.parse(errorText)
-          errorMessage = error.message || error.error || errorMessage
-        } catch {
-          errorMessage = errorText || errorMessage
-        }
-        throw new Error(errorMessage)
+        throw new Error(`HTTP error! status: ${response.status}`)
       }
 
-      const stream = response.body
-      if (!stream) {
-        throw new Error('No response stream')
-      }
+      const reader = response.body?.getReader()
+      if (!reader) throw new Error('No response stream')
 
-      const reader = stream.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
 
       while (true) {
         const { done, value } = await reader.read()
-        if (done) break
 
-        buffer += decoder.decode(value, { stream: true })
-        const lines = buffer.split('\n')
-        buffer = lines.pop() || ''
+        if (value) {
+          buffer += decoder.decode(value, { stream: true })
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
 
-        for (const line of lines) {
-          if (line.trim() && line.startsWith('data: ')) {
+          for (const line of lines) {
+            const trimmedLine = line.trim()
+            if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue
+
             try {
-              const data = JSON.parse(line.slice(6))
+              const data = JSON.parse(trimmedLine.slice(6))
 
-              if (data.error) {
-                throw new Error(data.error)
-              }
+              if (data.error) throw new Error(data.error)
 
               setStatus(prev => ({
                 step: data.step || prev.step,
@@ -121,30 +116,62 @@ function ProcessingContent() {
               }))
 
               if (data.complete) {
-                // Navigate to result page
+                // Ensure we hit 100%
+                setStatus(prev => ({ ...prev, progress: 100 }))
                 setTimeout(() => {
                   router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
-                }, 1000)
+                }, 800)
                 return
               }
-            } catch (e: any) {
-              if (e.message && e.message.includes('error')) {
-                throw e
-              }
-              // Ignore parse errors for malformed JSON
+            } catch (e) {
+              console.warn('Failed to parse SSE line:', line, e)
             }
           }
         }
+
+        if (done) {
+          // Process any remaining partial line in the buffer
+          if (buffer.trim()) {
+            const line = buffer.trim()
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6))
+                if (data.complete) {
+                  setStatus(prev => ({ ...prev, progress: 100 }))
+                  router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
+                  return
+                }
+              } catch (e) { }
+            }
+          }
+          break
+        }
       }
     } catch (error: any) {
+      console.error('Processing error:', error)
       setStatus({
         step: 'Error',
         progress: 0,
         message: error.message || 'An error occurred during processing',
         error: error.message,
       })
+      processingStartedRef.current = false // Allow retry
     }
-  }
+  }, [lang, router, searchParams])
+
+  useEffect(() => {
+    if (!fileId || !purpose) {
+      router.push(`/${lang}`)
+      return
+    }
+
+    if (mode === 'fix') {
+      processDocument(fileId, purpose)
+    } else {
+      // Analyze mode (default)
+      analyzeDocument()
+    }
+  }, [fileId, purpose, mode, router, lang, processDocument, analyzeDocument])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">

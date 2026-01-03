@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
       try {
         const body = await request.json()
-        const { fileId, purpose, maxSizeKB } = body
+        const { fileId, purpose, maxSizeKB, password, dpi, darkenSignature, autoCrop, selfAttestSignatureId } = body
 
         if (!fileId || !purpose) {
           controller.enqueue(
@@ -45,12 +45,26 @@ export async function POST(request: NextRequest) {
         const ext = path.extname(filePath)
         const outputPath = getProcessedPath(fileId, ext)
 
+        let selfAttestSignaturePath = undefined
+        if (selfAttestSignatureId) {
+          const filesInUploads = await fs.readdir(uploadDir)
+          const sigFile = filesInUploads.find(f => f.startsWith(selfAttestSignatureId))
+          if (sigFile) {
+            selfAttestSignaturePath = getUploadPath(selfAttestSignatureId, sigFile.replace(`${selfAttestSignatureId}_`, ''))
+          }
+        }
+
         // Process document
         await processDocument({
           filePath,
           outputPath,
           purpose: purpose as DocumentPurpose,
           maxSizeKB,
+          password,
+          dpi,
+          darkenSignature,
+          autoCrop,
+          selfAttestSignaturePath,
           onProgress: sendProgress,
         })
 
