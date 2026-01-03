@@ -10,6 +10,8 @@ interface AccessibilityContextType {
     setFontSize: (size: number) => void
     language: Language
     setLanguage: (lang: Language) => void
+    isSidebarOpen: boolean
+    setIsSidebarOpen: (open: boolean) => void
     t: (path: string) => any
 }
 
@@ -24,6 +26,7 @@ export function AccessibilityProvider({
 }) {
     const [fontSize, setFontSizeState] = useState(1)
     const [language, setLanguage] = useState<Language>(initialLanguage || 'en')
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
     useEffect(() => {
         // Only load from localStorage if NO initialLanguage was provided (safeguard)
@@ -67,7 +70,15 @@ export function AccessibilityProvider({
     }
 
     return (
-        <AccessibilityContext.Provider value={{ fontSize, setFontSize, language, setLanguage: changeLanguage, t }}>
+        <AccessibilityContext.Provider value={{
+            fontSize,
+            setFontSize,
+            language,
+            setLanguage: changeLanguage,
+            isSidebarOpen,
+            setIsSidebarOpen,
+            t
+        }}>
             {children}
         </AccessibilityContext.Provider>
     )

@@ -48,6 +48,7 @@ export const viewport = {
 }
 
 import { AccessibilityProvider } from '@/context/AccessibilityContext'
+import SharedUIWrapper from '@/components/SharedUIWrapper'
 
 export default function LangLayout({
   children,
@@ -93,7 +94,9 @@ export default function LangLayout({
             type="application/ld+json"
             dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
           />
-          {children}
+          <SharedUIWrapper>
+            {children}
+          </SharedUIWrapper>
         </AccessibilityProvider>
       </body>
     </html>

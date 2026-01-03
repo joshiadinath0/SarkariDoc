@@ -5,7 +5,7 @@ export const departments: Department[] = [
         id: 'income_tax',
         name: 'Income Tax Department',
         name_hi: 'आयकर विभाग',
-        logo: '/images/income_tax.png',
+        logo: 'income_tax',
         color: 'bg-orange-50 border-orange-200 text-orange-800',
         services: [
             {
@@ -60,7 +60,7 @@ export const departments: Department[] = [
         id: 'uidai',
         name: 'Aadhaar (UIDAI)',
         name_hi: 'आधार (UIDAI)',
-        logo: '/images/aadhaar.png',
+        logo: 'aadhaar',
         color: 'bg-yellow-50 border-yellow-200 text-yellow-800',
         services: [
             {
@@ -84,7 +84,7 @@ export const departments: Department[] = [
         id: 'state_services',
         name: 'State Gov Services',
         name_hi: 'राज्य सरकार सेवाएं',
-        logo: '/images/state_emblem.png',
+        logo: 'state_services',
         color: 'bg-green-50 border-green-200 text-green-800',
         services: [
             {
@@ -121,7 +121,7 @@ export const departments: Department[] = [
         id: 'passport_seva',
         name: 'Passport Seva',
         name_hi: 'पासपोर्ट सेवा',
-        logo: '/images/passport.png',
+        logo: 'passport',
         color: 'bg-blue-50 border-blue-200 text-blue-800',
         services: [
             {
@@ -161,7 +161,7 @@ export const departments: Department[] = [
         id: 'banking',
         name: 'Bank KYC',
         name_hi: 'बैंक केवाईसी',
-        logo: '/images/banking.png',
+        logo: 'banking',
         color: 'bg-indigo-50 border-indigo-200 text-indigo-800',
         services: [
             {
