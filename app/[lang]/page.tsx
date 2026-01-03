@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import UploadBox from '@/components/UploadBox'
 import DepartmentList from '@/components/DepartmentList'
 import TopBar from '@/components/TopBar'
-import Logo from '@/components/Logo'
 import HowItWorks from '@/components/HowItWorks'
 import SupportedDocs from '@/components/SupportedDocs'
 import FAQ from '@/components/FAQ'
@@ -97,20 +96,23 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
   return (
     <div className="min-h-screen bg-gray-50">
       <TopBar />
-      <header className="border-b-4 border-b-saffron-500 bg-white shadow-sm sticky top-0 z-50">
+      <header className="bg-white shadow-sm sticky top-0 z-50">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3" aria-label="Main navigation">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <a href={`/${lang}`} className="flex items-center space-x-4">
-                <Logo className="w-14 h-14" />
-                <div className="flex flex-col">
-                  <h1 className="text-2xl font-bold text-primary-600 tracking-tight leading-none">SarkariDoc</h1>
-                  <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-widest mt-0.5">{t('topbar.utility_name')}</span>
-                </div>
-              </a>
+              <img
+                src="/images/official-logo.png"
+                alt="SarkariDoc"
+                className="h-16 md:h-20 w-auto object-contain"
+              />
             </div>
           </div>
         </nav>
+        {/* Beautified Tricolor Gradient Line */}
+        <div className="h-1 md:h-1.5 w-full relative overflow-hidden">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#FF9933_36.5%,#e0e0e0,#138808_63.5%)]"></div>
+          <div className="absolute inset-0 shadow-[inset_0_-1px_0_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.2)]"></div>
+        </div>
       </header>
 
       {/* Hero Section */}
