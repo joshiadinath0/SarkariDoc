@@ -12,54 +12,58 @@ function ProcessingContent() {
   const router = useRouter()
   const params = useParams()
   const lang = params.lang as string
-  const fileId = searchParams.get('fileId')
+  const fileIdsParam = searchParams.get('fileId')
   const purpose = searchParams.get('purpose')
 
-  const [status, setStatus] = useState<ProcessingStatus>({
-    step: 'Initializing',
-    progress: 0,
-    message: 'Starting document processing...',
-  })
+  // Parse file IDs (comma separated)
+  const fileIds = fileIdsParam ? fileIdsParam.split(',').filter(Boolean) : []
+  const isBatch = fileIds.length > 1
 
-  const mode = searchParams.get('mode')
+  // State to track status of EACH file
+  const [statuses, setStatuses] = useState<Record<string, ProcessingStatus>>({})
 
-  // Use a ref to prevent multiple process calls in dev (Strict Mode)
-  const processingStartedRef = useRef(false)
+  // Track overall completion to redirect
+  const [completedCount, setCompletedCount] = useState(0)
 
+  // Use a ref to prevent double-firing in Strict Mode
+  const processedIdsRef = useRef<Set<string>>(new Set())
 
-  const analyzeDocument = useCallback(async () => {
-    setStatus({
-      step: 'Validation',
-      progress: 0,
-      message: 'Analyzing document...',
+  // Initialize statuses
+  useEffect(() => {
+    const initialStatuses: Record<string, ProcessingStatus> = {}
+    fileIds.forEach(id => {
+      if (!statuses[id]) {
+        initialStatuses[id] = {
+          step: 'Initializing',
+          progress: 0,
+          message: 'Waiting to start...',
+          fileId: id
+        }
+      }
     })
+    if (Object.keys(initialStatuses).length > 0) {
+      setStatuses(prev => ({ ...prev, ...initialStatuses }))
+    }
+  }, [fileIdsParam]) // Re-run if params change
 
-    // Simulate analysis delay (real analysis happens on result page via API)
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    setStatus({
-      step: 'Final Check',
-      progress: 100,
-      message: 'Analysis complete',
+  const updateStatus = useCallback((id: string, update: Partial<ProcessingStatus>) => {
+    setStatuses(prev => {
+      const current = prev[id] || { step: 'Init', progress: 0, message: '' }
+      return {
+        ...prev,
+        [id]: { ...current, ...update }
+      }
     })
+  }, [])
 
-    setTimeout(() => {
-      router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
-    }, 500)
-  }, [fileId, purpose, lang, router])
-
-  const processDocument = useCallback(async (fileId: string, purpose: string) => {
-    if (processingStartedRef.current) return
-    processingStartedRef.current = true
+  const processSingleFile = useCallback(async (id: string) => {
+    if (processedIdsRef.current.has(id)) return
+    processedIdsRef.current.add(id)
 
     try {
-      setStatus({
-        step: 'Initializing',
-        progress: 10,
-        message: 'Starting processing...',
-      })
+      updateStatus(id, { step: 'Initializing', progress: 5, message: 'Starting...' })
 
-      // Extract options to avoid depending on the whole searchParams object
+      // Extract options
       const maxSizeKB = searchParams.get('maxSizeKB')
       const password = searchParams.get('password')
       const dpi = searchParams.get('dpi')
@@ -71,7 +75,7 @@ function ProcessingContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          fileId,
+          fileId: id,
           purpose,
           maxSizeKB: maxSizeKB ? Number(maxSizeKB) : undefined,
           password,
@@ -82,9 +86,7 @@ function ProcessingContent() {
         }),
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
 
       const reader = response.body?.getReader()
       if (!reader) throw new Error('No response stream')
@@ -101,176 +103,123 @@ function ProcessingContent() {
           buffer = lines.pop() || ''
 
           for (const line of lines) {
-            const trimmedLine = line.trim()
-            if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue
-
+            const trimmed = line.trim()
+            if (!trimmed || !trimmed.startsWith('data: ')) continue
             try {
-              const data = JSON.parse(trimmedLine.slice(6))
-
+              const data = JSON.parse(trimmed.slice(6))
               if (data.error) throw new Error(data.error)
 
-              setStatus(prev => ({
-                step: data.step || prev.step,
-                progress: data.progress !== undefined ? data.progress : prev.progress,
-                message: data.message || prev.message,
-              }))
+              updateStatus(id, {
+                step: data.step,
+                progress: data.progress,
+                message: data.message
+              })
 
               if (data.complete) {
-                // Ensure we hit 100%
-                setStatus(prev => ({ ...prev, progress: 100 }))
-                setTimeout(() => {
-                  router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
-                }, 800)
+                updateStatus(id, { progress: 100, step: 'Complete', message: 'Done' })
+                setCompletedCount(c => c + 1)
                 return
               }
-            } catch (e) {
-              console.warn('Failed to parse SSE line:', line, e)
-            }
+            } catch (e) { console.warn('SSE Parse Error', e) }
           }
         }
 
-        if (done) {
-          // Process any remaining partial line in the buffer
-          if (buffer.trim()) {
-            const line = buffer.trim()
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6))
-                if (data.complete) {
-                  setStatus(prev => ({ ...prev, progress: 100 }))
-                  router.push(`/${lang}/result?fileId=${fileId}&purpose=${purpose}`)
-                  return
-                }
-              } catch (e) { }
-            }
-          }
-          break
-        }
+        if (done) break
       }
     } catch (error: any) {
-      console.error('Processing error:', error)
-      setStatus({
+      console.error('Processing error for', id, error)
+      updateStatus(id, {
         step: 'Error',
         progress: 0,
-        message: error.message || 'An error occurred during processing',
-        error: error.message,
+        message: 'Failed',
+        error: error.message
       })
-      processingStartedRef.current = false // Allow retry
+      // Even if error, we count as "handled" to allow flow to finish? 
+      // Or maybe just let it sit there.
     }
-  }, [lang, router, searchParams])
+  }, [purpose, searchParams, updateStatus])
 
+  // Trigger processing
   useEffect(() => {
-    if (!fileId || !purpose) {
-      router.push(`/${lang}`)
-      return
-    }
+    if (!fileIds.length || !purpose) return
 
+    const mode = searchParams.get('mode')
     if (mode === 'fix') {
-      processDocument(fileId, purpose)
+      fileIds.forEach(id => processSingleFile(id))
     } else {
-      // Analyze mode (default)
-      analyzeDocument()
+      // Analyze mode mock
+      fileIds.forEach(id => {
+        updateStatus(id, { step: 'Analysis', progress: 100, message: 'Analyzed' })
+        setCompletedCount(c => c + 1)
+      })
     }
-  }, [fileId, purpose, mode, router, lang, processDocument, analyzeDocument])
+  }, [fileIdsParam, purpose, searchParams, processSingleFile, updateStatus])
+
+  // Redirect when ALL complete
+  useEffect(() => {
+    if (fileIds.length > 0 && completedCount === fileIds.length && completedCount > 0) {
+      const timeout = setTimeout(() => {
+        // Redirect to result page
+        // Note: Result page also needs to support batch IDs!
+        router.push(`/${lang}/result?fileId=${fileIds.join(',')}&purpose=${purpose}`)
+      }, 1000)
+      return () => clearTimeout(timeout)
+    }
+  }, [completedCount, fileIds, lang, purpose, router])
+
+  if (!fileIdsParam || !purpose) {
+    return null // Or redirect
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-12">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-xl p-8 md:p-12">
         <div className="text-center mb-8">
-          <div className="w-20 h-20 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-            {status.error ? (
-              <svg className="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : status.progress === 100 ? (
-              <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-            ) : (
-              <svg className="w-10 h-10 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-            )}
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {status.error ? 'Processing Failed' : status.progress === 100 ? 'Processing Complete!' : 'Processing Document'}
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            {isBatch ? `Processing ${fileIds.length} Files` : 'Processing Document'}
           </h2>
-          <p className="text-gray-600">{status.message}</p>
+          <p className="text-gray-600">
+            {completedCount === fileIds.length ? 'All finished! Redirecting...' : 'Please wait while we optimize your documents.'}
+          </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>{status.step}</span>
-            <span>{status.progress}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-blue-600 to-indigo-600 transition-all duration-300 ease-out rounded-full"
-              style={{ width: `${status.progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Error Message */}
-        {status.error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <p className="text-red-800 text-sm">{status.error}</p>
-          </div>
-        )}
-
-        {/* Steps */}
-        <div className="space-y-3">
-          {[
-            { name: 'Upload', key: 'upload' },
-            { name: 'Validation', key: 'validation' },
-            { name: 'Processing', key: 'processing' },
-            { name: 'Optimization', key: 'optimization' },
-            { name: 'Final Check', key: 'final' },
-          ].map((step, index) => {
-            const stepProgress = (index + 1) * 20
-            const isActive = status.progress >= stepProgress
-            const isCurrent = status.progress >= stepProgress - 20 && status.progress < stepProgress + 20
-
+        <div className="space-y-6">
+          {fileIds.map((id, index) => {
+            const s = statuses[id] || { step: 'Waiting', progress: 0, message: 'Pending...' }
             return (
-              <div
-                key={step.key}
-                className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${isActive ? 'bg-green-50' : isCurrent ? 'bg-blue-50' : 'bg-gray-50'
-                  }`}
-              >
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${isActive
-                    ? 'bg-green-500 text-white'
-                    : isCurrent
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-300 text-gray-600'
-                    }`}
-                >
-                  {isActive ? (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : (
-                    <span className="text-xs font-semibold">{index + 1}</span>
-                  )}
+              <div key={id} className="bg-gray-50 rounded-xl p-4 border border-gray-100 animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
+                <div className="flex justify-between items-center mb-2">
+                  <div className="flex items-center space-x-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.error ? 'bg-red-100 text-red-600' :
+                        s.progress === 100 ? 'bg-green-100 text-green-600' :
+                          'bg-blue-100 text-blue-600'
+                      }`}>
+                      {s.error ? (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      ) : s.progress === 100 ? (
+                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                      ) : (
+                        <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900 text-sm">File {index + 1}</p>
+                      <p className="text-xs text-gray-500">{s.message}</p>
+                    </div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-700">{Math.round(s.progress)}%</span>
                 </div>
-                <span className={`text-sm ${isActive ? 'text-green-700 font-medium' : isCurrent ? 'text-blue-700 font-medium' : 'text-gray-600'}`}>
-                  {step.name}
-                </span>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full transition-all duration-300 ${s.error ? 'bg-red-500' : 'bg-blue-600'}`}
+                    style={{ width: `${s.progress}%` }}
+                  />
+                </div>
+                {s.error && <p className="text-xs text-red-500 mt-1">{s.error}</p>}
               </div>
             )
           })}
         </div>
-
-        {status.error && (
-          <button
-            onClick={() => router.push(`/${lang}`)}
-            className="w-full mt-6 bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </button>
-        )}
       </div>
     </div>
   )

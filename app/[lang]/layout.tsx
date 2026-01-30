@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import '@/app/globals.css'
+import { ThemeProvider } from '@/context/ThemeContext'
+import { AccessibilityProvider } from '@/context/AccessibilityContext'
+import SharedUIWrapper from '@/components/SharedUIWrapper'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -47,9 +50,6 @@ export const viewport = {
   maximumScale: 1,
 }
 
-import { AccessibilityProvider } from '@/context/AccessibilityContext'
-import SharedUIWrapper from '@/components/SharedUIWrapper'
-
 export default function LangLayout({
   children,
   params: { lang },
@@ -89,17 +89,18 @@ export default function LangLayout({
   return (
     <html lang={lang}>
       <body className={inter.className}>
-        <AccessibilityProvider initialLanguage={lang as any}>
-          <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-          />
-          <SharedUIWrapper>
-            {children}
-          </SharedUIWrapper>
-        </AccessibilityProvider>
+        <ThemeProvider>
+          <AccessibilityProvider initialLanguage={lang as any}>
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+            />
+            <SharedUIWrapper>
+              {children}
+            </SharedUIWrapper>
+          </AccessibilityProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
 }
-

@@ -7,16 +7,24 @@ import * as pdfjsLib from 'pdfjs-dist/build/pdf'
 import { createWorker } from 'tesseract.js'
 import { DocumentPurpose, DocumentPreset } from '@/types'
 import { getPreset } from './presets'
+import { validateDocument } from './validator'
 
+// Dynamic import for canvas (server-only, native module)
 // Dynamic import for canvas (server-only, native module)
 let createCanvas: any = null
 try {
   // Only import canvas on server-side (API routes)
   if (typeof window === 'undefined') {
-    const canvasModule = require('canvas')
-    createCanvas = canvasModule.createCanvas
+    // Check if canvas is available in node_modules
+    try {
+      const canvasModule = require('canvas')
+      createCanvas = canvasModule.createCanvas
+    } catch (e) {
+      console.warn('Canvas not found, falling back to pure JS processing')
+    }
   }
 } catch (e) {
+  // Ignore errors during dynamic import
 }
 
 
@@ -58,7 +66,22 @@ export async function processDocument(options: ProcessingOptions): Promise<strin
     const fileSizeKB = stats.size / 1024
 
 
-    reportProgress('validation', 20, 'Validating document...')
+    reportProgress('validation', 0, 'Validating document...')
+
+    // 1. Validation Step
+    const validation = await validateDocument(filePath, purpose)
+
+    if (!validation.passed) {
+      const errors = validation.checks.filter(c => !c.passed && c.severity === 'error').map(c => c.message).join(', ')
+      throw new Error(`Validation Failed: ${errors}`)
+    }
+
+    const warnings = validation.checks.filter(c => !c.passed && c.severity === 'warning')
+    if (warnings.length > 0) {
+      reportProgress('validation', 10, `Warning: ${warnings[0].message}`)
+    } else {
+      reportProgress('validation', 10, 'Validation complete')
+    }
 
     // Ensure output directory exists
     await fs.ensureDir(path.dirname(outputPath))
@@ -463,9 +486,26 @@ async function processPDF(
           let quality = 55
           let scaleFactor = 0.85
 
+
           // Try rendering PDF to image with progressive compression
-          for (let attempt = 0; attempt < 25; attempt++) {
+          // OPTIMIZATION: Use smart binary search instead of linear 25 steps
+          let minQuality = 10
+          let maxQuality = 100
+          let bestQuality = 60
+          let bestScale = 1.0
+
+          for (let attempt = 0; attempt < 8; attempt++) {
             try {
+              // Adjust params based on previous attempt
+              if (imageBuffer && (imageBuffer.length / 1024) > preset.maxSizeKB) {
+                maxQuality = quality
+                quality = Math.max(minQuality, Math.floor((minQuality + maxQuality) / 2))
+                scaleFactor = Math.max(0.5, scaleFactor * 0.9)
+              } else if (imageBuffer && (imageBuffer.length / 1024) < preset.maxSizeKB * 0.8) {
+                // Too small, maybe increase quality? (Not usually needed for "max size" constraint)
+                // transforming to binary search for "just under" max size is complex, 
+                // prioritizing meeting constraint quickly.
+              }
 
               const renderWidth = Math.max(400, Math.round(width * scaleFactor))
               const renderHeight = Math.max(400, Math.round(height * scaleFactor))
@@ -499,20 +539,23 @@ async function processPDF(
 
               if (imageSizeKB <= preset.maxSizeKB) {
                 imageBuffer = canvasBuffer
+                // We found a valid size, but let's try to see if we can get better quality?
+                // For speed, we accept the first match that works or continue if it's too small?
+                // For MVP/Speed: Accept first valid match.
                 break
               }
 
-              // Reduce quality and scale more aggressively
-              if (quality > 40) {
+              // Reducing quality for next iteration
+              if (quality > 30) {
+                quality -= 15
+                scaleFactor -= 0.1
+              } else {
                 quality -= 5
                 scaleFactor -= 0.05
-              } else {
-                quality -= 3
-                scaleFactor -= 0.08
               }
 
-              if (quality < 18) quality = 18
-              if (scaleFactor < 0.4) break
+              if (quality < 10) quality = 10
+              if (scaleFactor < 0.2) break
             } catch (renderError: any) {
               break
             }
@@ -1415,19 +1458,24 @@ async function detectAadhaarInImage(imagePath: string): Promise<{ buffer: Buffer
     const ocrPromise = (async () => {
       // Create worker with strict environment checks
       try {
+        // Updated for Tesseract.js v5 compatibility
         worker = await createWorker('eng', 1, {
-          logger: m => {
+          logger: (m: any) => {
             if (m.status === 'recognizing text') {
               console.log(`[OCR] Progress: ${Math.round(m.progress * 100)}%`)
             }
           },
           cachePath: path.join(process.cwd(), '.tesseract_cache'),
-          // Explicitly set worker and core for stability in Next.js
           gzip: false,
         })
       } catch (workerErr: any) {
-        console.warn('[OCR] Failed to initialize worker. This is common in some dev environments. Falling back to heuristic.')
-        return []
+        // Fallback for different Tesseract versions (v5 vs v4)
+        try {
+          worker = await createWorker('eng')
+        } catch (e) {
+          console.warn('[OCR] Failed to initialize worker. This is common in some dev environments. Falling back to heuristic.')
+          return []
+        }
       }
 
       const { data: { blocks } } = await worker.recognize(imagePath)

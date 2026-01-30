@@ -3,6 +3,7 @@ import { PDFDocument } from 'pdf-lib'
 import fs from 'fs-extra'
 import path from 'path'
 import { DocumentPurpose, ValidationResult, ValidationCheck, DocumentPreset } from '@/types'
+import { createWorker } from 'tesseract.js'
 import { getPreset } from './presets'
 
 export async function validateDocument(
@@ -191,6 +192,50 @@ export async function validateDocument(
       }
     }
 
+    // OCR Validation for specific documents
+    if ((purpose === 'pancard' || purpose === 'aadhaar_card') && ext !== '.pdf') {
+      try {
+        const worker = await createWorker('eng', 1, {
+          logger: () => { },
+          errorHandler: () => { }
+        })
+        const { data: { text } } = await worker.recognize(filePath)
+        await worker.terminate()
+
+        const cleanText = text.replace(/\s+/g, '')
+
+        if (purpose === 'pancard') {
+          const panRegex = /[A-Z]{5}[0-9]{4}[A-Z]{1}/i
+          const hasPan = panRegex.test(cleanText) || panRegex.test(text)
+
+          const ocrCheck: ValidationCheck = {
+            name: 'Content Verification',
+            passed: hasPan,
+            message: hasPan ? 'Valid PAN Number detected' : 'Could not detect a clear PAN Number',
+            severity: 'warning'
+          }
+          checks.push(ocrCheck)
+          if (!hasPan) suggestions.push('Ensure the PAN number is clearly visible and not blurred')
+        }
+        else if (purpose === 'aadhaar_card') {
+          // Aadhaar is 12 digits, often XXXX XXXX XXXX
+          const aadhaarRegex = /[0-9]{4}\s?[0-9]{4}\s?[0-9]{4}/
+          const hasAadhaar = aadhaarRegex.test(text)
+
+          const ocrCheck: ValidationCheck = {
+            name: 'Content Verification',
+            passed: hasAadhaar,
+            message: hasAadhaar ? 'Valid Aadhaar Number detected' : 'Could not detect a clear Aadhaar Number',
+            severity: 'warning'
+          }
+          checks.push(ocrCheck)
+        }
+
+      } catch (e) {
+        console.warn("OCR Validation failed:", e)
+      }
+    }
+
     // Determine overall pass status
     const hasErrors = checks.some(check => !check.passed && check.severity === 'error')
     const passed = !hasErrors
@@ -215,4 +260,3 @@ export async function validateDocument(
     }
   }
 }
-

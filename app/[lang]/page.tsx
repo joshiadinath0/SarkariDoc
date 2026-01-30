@@ -14,7 +14,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
   const router = useRouter()
   const { t, language } = useAccessibility()
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null)
-  const [file, setFile] = useState<File | null>(null)
+  const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [customSizeKB, setCustomSizeKB] = useState<number | ''>('')
   const [darkenSignature, setDarkenSignature] = useState(false)
@@ -27,31 +27,38 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
   const selectedService = selectedServiceId ? getService(selectedServiceId) : null
   const isGeneralTool = departments.find(d => d.id === 'general_tools')?.services.some(s => s.id === selectedServiceId)
   const isSignature = selectedServiceId?.includes('sign') || selectedServiceId === 'signature'
-  const isPDF = file?.type === 'application/pdf' || file?.name.toLowerCase().endsWith('.pdf')
+  const isPDF = (files.length > 0 && files.every(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')))
 
   const handleFixDocument = async () => {
-    if (!file || !selectedServiceId) {
+    if (files.length === 0 || !selectedServiceId) {
+      alert("Please select files first")
       return
     }
 
     setIsProcessing(true)
 
     try {
-      // Upload file
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('purpose', selectedServiceId)
+      const uploadedIds: string[] = []
 
-      const uploadResponse = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
+      // Enhanced Batch Upload: Upload files sequentially to avoid server overload
+      for (const file of files) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('purpose', selectedServiceId)
 
-      if (!uploadResponse.ok) {
-        throw new Error('Upload failed')
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!uploadResponse.ok) {
+          throw new Error(`Upload failed for ${file.name}`)
+        }
+
+        const { fileId } = await uploadResponse.json()
+        uploadedIds.push(fileId)
       }
 
-      const { fileId } = await uploadResponse.json()
       let sigId = null
 
       // Upload signature if needed
@@ -72,7 +79,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
 
       // Navigate to processing page - Pass custom size if set
       const queryParams = new URLSearchParams({
-        fileId,
+        fileId: uploadedIds.join(','), // Send comma separated IDs
         purpose: selectedServiceId,
       })
 
@@ -87,6 +94,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
 
       router.push(`/${lang}/processing?${queryParams.toString()}&mode=fix`)
     } catch (error) {
+      console.error(error)
       alert('Failed to upload files. Please try again.')
       setIsProcessing(false)
     }
@@ -145,8 +153,9 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
             {/* Upload Box */}
             <div>
               <UploadBox
-                file={file}
-                onFileSelect={setFile}
+                files={files}
+                onFilesSelect={setFiles}
+                multiple={true} // Enable Batch Processing
                 acceptedFormats={selectedService.rules.allowedFormats}
               />
             </div>
@@ -321,7 +330,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
             {/* CTA Button */}
             <button
               onClick={handleFixDocument}
-              disabled={!file || !selectedServiceId || isProcessing}
+              disabled={files.length === 0 || !selectedServiceId || isProcessing}
               className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-4 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
               {isProcessing ? (

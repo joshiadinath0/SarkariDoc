@@ -51,5 +51,6 @@ export interface ProcessingStatus {
   progress: number
   message: string
   error?: string
+  fileId?: string
 }
 
