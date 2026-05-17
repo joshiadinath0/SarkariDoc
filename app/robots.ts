@@ -7,7 +7,6 @@ export default function robots(): MetadataRoute.Robots {
             allow: '/',
             disallow: ['/api/', '/uploads/', '/processed/', '/temp/'],
         },
-        // TODO: Replace with your actual purchased domain
-        sitemap: 'https://sarkaridoc.com/sitemap.xml',
+        sitemap: 'https://sarkaridocs.com/sitemap.xml',
     }
 }

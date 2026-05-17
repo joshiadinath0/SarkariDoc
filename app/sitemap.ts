@@ -1,8 +1,8 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
-    // TODO: Replace with your actual purchased domain (e.g., https://sarkaridoc.in)
-    const baseUrl = 'https://sarkaridoc.com'
+    // Your purchased domain!
+    const baseUrl = 'https://sarkaridocs.com'
 
     return [
         {

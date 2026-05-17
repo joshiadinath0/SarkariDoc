@@ -37,10 +37,10 @@ export const metadata: Metadata = {
     description: 'Fix your documents for Indian government portals in seconds.',
   },
   alternates: {
-    canonical: 'https://sarkaridoc.com/en',
+    canonical: 'https://sarkaridocs.com/en',
     languages: {
-      'en': 'https://sarkaridoc.com/en',
-      'hi': 'https://sarkaridoc.com/hi',
+      'en': 'https://sarkaridocs.com/en',
+      'hi': 'https://sarkaridocs.com/hi',
     },
   },
 }
