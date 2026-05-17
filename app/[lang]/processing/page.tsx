@@ -137,6 +137,7 @@ function ProcessingContent() {
       // Even if error, we count as "handled" to allow flow to finish? 
       // Or maybe just let it sit there.
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [purpose, searchParams, updateStatus])
 
   // Trigger processing
@@ -191,8 +192,8 @@ function ProcessingContent() {
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center space-x-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${s.error ? 'bg-red-100 text-red-600' :
-                        s.progress === 100 ? 'bg-green-100 text-green-600' :
-                          'bg-blue-100 text-blue-600'
+                      s.progress === 100 ? 'bg-green-100 text-green-600' :
+                        'bg-blue-100 text-blue-600'
                       }`}>
                       {s.error ? (
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

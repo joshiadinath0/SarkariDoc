@@ -225,6 +225,7 @@ export default function HomePage({ params: { lang } }: { params: { lang: 'en' | 
                             <div className="p-4 flex items-center justify-between">
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 bg-white rounded-lg border flex items-center justify-center p-1">
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
                                   <img src={URL.createObjectURL(signatureFile)} alt="Signature" className="max-w-full max-h-full object-contain" />
                                 </div>
                                 <div>

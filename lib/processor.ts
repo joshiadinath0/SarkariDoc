@@ -10,22 +10,9 @@ import { getPreset } from './presets'
 import { validateDocument } from './validator'
 
 // Dynamic import for canvas (server-only, native module)
-// Dynamic import for canvas (server-only, native module)
 let createCanvas: any = null
-try {
-  // Only import canvas on server-side (API routes)
-  if (typeof window === 'undefined') {
-    // Check if canvas is available in node_modules
-    try {
-      const canvasModule = require('canvas')
-      createCanvas = canvasModule.createCanvas
-    } catch (e) {
-      console.warn('Canvas not found, falling back to pure JS processing')
-    }
-  }
-} catch (e) {
-  // Ignore errors during dynamic import
-}
+// Removed explicit require('canvas') string as it breaks Next.js Webpack static analysis on Vercel
+// Vercel relies on pure Sharp/libvips processing for PDFs instead.
 
 
 
@@ -476,123 +463,7 @@ async function processPDF(
         } else {
         }
 
-        // Strategy 2: Try canvas-based rendering (requires canvas, may not work on all hosts)
-        if (createCanvas) {
-
-          const page = pages[0]
-          const { width, height } = page.getSize()
-
-          let imageBuffer: Buffer | null = null
-          let quality = 55
-          let scaleFactor = 0.85
-
-
-          // Try rendering PDF to image with progressive compression
-          // OPTIMIZATION: Use smart binary search instead of linear 25 steps
-          let minQuality = 10
-          let maxQuality = 100
-          let bestQuality = 60
-          let bestScale = 1.0
-
-          for (let attempt = 0; attempt < 8; attempt++) {
-            try {
-              // Adjust params based on previous attempt
-              if (imageBuffer && (imageBuffer.length / 1024) > preset.maxSizeKB) {
-                maxQuality = quality
-                quality = Math.max(minQuality, Math.floor((minQuality + maxQuality) / 2))
-                scaleFactor = Math.max(0.5, scaleFactor * 0.9)
-              } else if (imageBuffer && (imageBuffer.length / 1024) < preset.maxSizeKB * 0.8) {
-                // Too small, maybe increase quality? (Not usually needed for "max size" constraint)
-                // transforming to binary search for "just under" max size is complex, 
-                // prioritizing meeting constraint quickly.
-              }
-
-              const renderWidth = Math.max(400, Math.round(width * scaleFactor))
-              const renderHeight = Math.max(400, Math.round(height * scaleFactor))
-
-              // Create canvas and render PDF
-              const canvas = createCanvas(renderWidth, renderHeight)
-              const ctx = canvas.getContext('2d')
-
-              // Load PDF with pdfjs (convert Buffer to Uint8Array)
-              const pdfUint8Array = new Uint8Array(pdfBytes)
-              const loadingTask = pdfjsLib.getDocument({
-                data: pdfUint8Array,
-                standardFontDataUrl: path.join(process.cwd(), 'node_modules/pdfjs-dist/standard_fonts/')
-              })
-              const pdfDocument = await loadingTask.promise
-              const pdfPage = await pdfDocument.getPage(1)
-
-              const viewport = pdfPage.getViewport({ scale: scaleFactor })
-
-              const renderContext = {
-                canvasContext: ctx as any,
-                viewport: viewport,
-              }
-
-              await pdfPage.render(renderContext).promise
-
-              // Convert canvas to JPEG buffer with compression
-              const canvasBuffer = canvas.toBuffer('image/jpeg', { quality: quality / 100 })
-              const imageSizeKB = canvasBuffer.length / 1024
-
-
-              if (imageSizeKB <= preset.maxSizeKB) {
-                imageBuffer = canvasBuffer
-                // We found a valid size, but let's try to see if we can get better quality?
-                // For speed, we accept the first match that works or continue if it's too small?
-                // For MVP/Speed: Accept first valid match.
-                break
-              }
-
-              // Reducing quality for next iteration
-              if (quality > 30) {
-                quality -= 15
-                scaleFactor -= 0.1
-              } else {
-                quality -= 5
-                scaleFactor -= 0.05
-              }
-
-              if (quality < 10) quality = 10
-              if (scaleFactor < 0.2) break
-            } catch (renderError: any) {
-              break
-            }
-          }
-
-          if (imageBuffer) {
-            // Embed compressed image back into PDF (maintain PDF format)
-
-            const newPdfDoc = await PDFDocument.create()
-            const newPage = newPdfDoc.addPage([width, height])
-
-            // Embed the compressed JPEG image
-            const jpegImage = await newPdfDoc.embedJpg(imageBuffer)
-            newPage.drawImage(jpegImage, {
-              x: 0,
-              y: 0,
-              width: width,
-              height: height,
-            })
-
-            const compressedPdfBytes = await newPdfDoc.save()
-            await fs.writeFile(outputPath, compressedPdfBytes)
-
-            const savedStats = await fs.stat(outputPath)
-            const savedSizeKB = savedStats.size / 1024
-
-
-            if (savedSizeKB <= preset.maxSizeKB) {
-              reportProgress('complete', 100, `Processing complete! Compressed PDF: ${savedSizeKB.toFixed(2)} KB`)
-            } else {
-              reportProgress('complete', 100, `Warning: File size ${savedSizeKB.toFixed(2)} KB exceeds target`)
-            }
-
-            return outputPath
-          }
-        } else {
-        }
+        // Strategy 2: Canvas-based rendering has been completely removed to ensure Vercel compatibility and fix TypeScript inference errors.
 
         // Last resort: Try pdfjs-dist to render PDF (works without canvas but needs Node.js canvas polyfill)
 
