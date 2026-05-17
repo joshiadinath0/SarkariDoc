@@ -4,7 +4,7 @@ import '@/app/globals.css'
 import { ThemeProvider } from '@/context/ThemeContext'
 import { AccessibilityProvider } from '@/context/AccessibilityContext'
 import SharedUIWrapper from '@/components/SharedUIWrapper'
-import { Analytics } from '@vercel/analytics/react'
+import { Analytics } from '@vercel/analytics/next'
 
 const inter = Inter({ subsets: ['latin'] })
 
