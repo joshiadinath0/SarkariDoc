@@ -1,35 +1,22 @@
 import { MetadataRoute } from 'next'
-import { examTools } from '@/lib/exam-data'
 
 export default function sitemap(): MetadataRoute.Sitemap {
+    // TODO: Replace with your actual purchased domain (e.g., https://sarkaridoc.in)
     const baseUrl = 'https://sarkaridoc.com'
-    const locales = ['en', 'hi']
 
-    const routes = [
-        { path: '', priority: 1, changeFrequency: 'daily' as const },
-        ...examTools.map(tool => ({ path: `/tools/${tool.slug}`, priority: 0.8, changeFrequency: 'weekly' as const })),
-        { path: '/processing', priority: 0.1, changeFrequency: 'always' as const },
-        { path: '/result', priority: 0.1, changeFrequency: 'always' as const },
+    return [
+        {
+            url: `${baseUrl}/en`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 1.0,
+        },
+        {
+            url: `${baseUrl}/hi`,
+            lastModified: new Date(),
+            changeFrequency: 'weekly',
+            priority: 1.0,
+        },
+        // You can add more specific tool pages here in the future as you expand it
     ]
-
-    const sitemapEntries: MetadataRoute.Sitemap = []
-
-    locales.forEach(lang => {
-        routes.forEach(route => {
-            sitemapEntries.push({
-                url: `${baseUrl}/${lang}${route.path}`,
-                lastModified: new Date(),
-                changeFrequency: route.changeFrequency,
-                priority: route.priority,
-                alternates: {
-                    languages: {
-                        en: `${baseUrl}/en${route.path}`,
-                        hi: `${baseUrl}/hi${route.path}`,
-                    },
-                },
-            })
-        })
-    })
-
-    return sitemapEntries
 }
