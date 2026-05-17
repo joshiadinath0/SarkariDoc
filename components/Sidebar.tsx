@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { useAccessibility } from '@/context/AccessibilityContext'
 
@@ -45,10 +46,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     <div className="px-4 sm:px-6 lg:px-8 py-3 flex items-center">
                         {/* Spacer for the Burger Button which is z-[110] and stays on top */}
                         <div className="w-10 h-10 mr-2 md:mr-4 flex-shrink-0" />
-                        <img
+                        <Image
                             src="/images/official-logo.png"
                             alt="SarkariDoc"
+                            width={160}
+                            height={56}
                             className="h-12 md:h-14 w-auto object-contain"
+                            priority
                         />
                     </div>
                     <div className="h-1 md:h-1.5 w-full relative overflow-hidden">

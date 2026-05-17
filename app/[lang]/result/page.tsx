@@ -132,6 +132,7 @@ function ResultContent() {
                     title="Document Preview"
                   />
                 ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img
                     src={previewUrl}
                     alt="Document Preview"

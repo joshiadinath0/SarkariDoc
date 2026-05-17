@@ -9,7 +9,7 @@ export default function Ticker() {
                 <div className="flex items-center space-x-8 px-4">
                     <span className="text-white text-xs md:text-sm font-bold flex items-center">
                         <span className="bg-white text-blue-600 px-2 py-0.5 rounded-full text-[10px] uppercase font-black mr-2">NEW</span>
-                        Click on top-left "Master Document Guide" for complete Indian Govt Service checklists! 🦁 🇮🇳
+                        Click on top-left &quot;Master Document Guide&quot; for complete Indian Govt Service checklists! 🦁 🇮🇳
                     </span>
                     <span className="text-blue-100 text-xs md:text-sm font-medium">
                         • 28+ High-Traffic Services added including UPSC, NEET, GST, and Ration Card!
@@ -23,7 +23,7 @@ export default function Ticker() {
                 <div className="flex items-center space-x-8 px-4">
                     <span className="text-white text-xs md:text-sm font-bold flex items-center">
                         <span className="bg-white text-blue-600 px-2 py-0.5 rounded-full text-[10px] uppercase font-black mr-2">NEW</span>
-                        Click on top-left "Master Document Guide" for complete Indian Govt Service checklists! 🦁 🇮🇳
+                        Click on top-left &quot;Master Document Guide&quot; for complete Indian Govt Service checklists! 🦁 🇮🇳
                     </span>
                     <span className="text-blue-100 text-xs md:text-sm font-medium">
                         • 28+ High-Traffic Services added including UPSC, NEET, GST, and Ration Card!

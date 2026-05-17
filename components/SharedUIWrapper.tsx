@@ -2,6 +2,7 @@
 
 import React from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import TopBar from '@/components/TopBar'
 import Sidebar from '@/components/Sidebar'
 import BurgerButton from '@/components/BurgerButton'
@@ -26,10 +27,13 @@ export default function SharedUIWrapper({ children }: { children: React.ReactNod
                                 className="mr-2"
                             />
                             <Link href={`/${language || 'en'}`} className="block">
-                                <img
+                                <Image
                                     src="/images/official-logo.png"
                                     alt="SarkariDoc"
+                                    width={200}
+                                    height={80}
                                     className="h-16 md:h-20 w-auto object-contain cursor-pointer select-none"
+                                    priority
                                 />
                             </Link>
                         </div>
